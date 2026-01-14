@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <title>Gestor de Remates</title>
-    
+    <link rel="icon" type="image/png" href="hzz.png">
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
     <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -21,7 +21,7 @@
             --text-light: #777777;
         }
 
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--dosh-bg); padding: 15px; color: var(--text-main); margin: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--dosh-bg); padding: 15px; color: var(--text-main); margin: 0; -webkit-tap-highlight-color: transparent; padding-bottom: 50px; }
         .container { max-width: 800px; margin: 0 auto; background: rgb(240, 239, 239); padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0, 59, 115, 0.08); border-top: 5px solid var(--dosh-green); }
         h1 { color: var(--dosh-blue); font-size: 1.6rem; margin-top: 0; text-align: center; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase; }
         .subtitle { text-align: center; color: var(--text-light); font-size: 0.9rem; margin-bottom: 25px; font-weight: 500; }
@@ -81,10 +81,24 @@
         .mode-card p { color: #666; font-size: 0.9rem; margin: 0; line-height: 1.4; }
         .icon-mode { font-size: 3.5rem; display: block; margin-bottom: 10px; }
         .badge-new { position: absolute; top: 15px; right: 15px; background: var(--dosh-green); color: white; font-size: 0.7rem; font-weight: bold; padding: 4px 8px; border-radius: 10px; text-transform: uppercase; }
-
-        /* Estilo para opción Macal seleccionada */
         .macal-option-box { background-color: #e3f2fd; border: 1px solid #90caf9; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
 
+        /* --- LOGO DEV FOOTER --- */
+        .watermark-dev {
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 30px;
+            opacity: 0.7;
+            width: 100%;
+        }
+        .watermark-dev img {
+            max-height: 90px; /* Tamaño del logo */
+            width: auto;
+            transition: opacity 0.3s;
+        }
+        .watermark-dev img:hover {
+            opacity: 1;
+        }
     </style>
     
     <script>
@@ -409,6 +423,10 @@
 
         <div id="resultado_ai" style="margin-top: 15px; background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #ddd; display: none; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.5;"></div>
     </div>
+</div>
+
+<div class="watermark-dev">
+    <img src="hzz.png" alt="Desarrollado por Joaquín Hernández">
 </div>
 
 <script type="py">
