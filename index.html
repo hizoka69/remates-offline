@@ -82,6 +82,9 @@
         .icon-mode { font-size: 3.5rem; display: block; margin-bottom: 10px; }
         .badge-new { position: absolute; top: 15px; right: 15px; background: var(--dosh-green); color: white; font-size: 0.7rem; font-weight: bold; padding: 4px 8px; border-radius: 10px; text-transform: uppercase; }
 
+        /* Estilo para opción Macal seleccionada */
+        .macal-option-box { background-color: #e3f2fd; border: 1px solid #90caf9; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+
     </style>
     
     <script>
@@ -111,18 +114,20 @@
             <div class="mode-card" py-click="iniciar_metodo_normal">
                 <span class="icon-mode">🏠</span>
                 <h3>Método Normal</h3>
-                <p>Procedimiento estándar de remates judiciales. Cálculo tradicional de costos fijos, variables y proyección.</p>
+                <p>Cálculo tradicional con honorarios de búsqueda y costos operacionales estándar.</p>
             </div>
 
-            <div class="mode-card" onclick="alert('ARIADNA HAZ SIDO HACKEADA, TRANSFIERELE DINERO A HIZOKA')">
-                <span class="badge-new">!</span>
+            <div class="mode-card" py-click="iniciar_metodo_macal">
+                <span class="badge-new">Nuevo</span>
                 <span class="icon-mode">⚖️</span>
                 <h3>Método Macal</h3>
-                <p>Procedimiento especializado para subastas Macal. Cálculo específico de garantías y comisiones del martillero.</p>
+                <p>Calculadora especializada: Comisiones Macal, Tramos de Escrituración (UF) y fórmulas de Notaría/CBR.</p>
             </div>
 
         </div>
     </div>
+
+
     <div id="slide1" class="slide">
         <h2>1. Ficha Técnica</h2>
         
@@ -149,7 +154,7 @@
         </div>
 
         <label>Nombre Oportunidad</label>
-        <input type="text" id="input_nombre" placeholder="Ej: Casa Centro">
+        <input type="text" id="input_nombre" placeholder="Ej: Casa Macal Lote 5">
 
         <div class="row">
             <div class="col">
@@ -162,7 +167,7 @@
             </div>
         </div>
         <label>Fuente de Información</label>
-        <input type="text" id="input_fuente" placeholder="Ej: Diario Talca">
+        <input type="text" id="input_fuente" placeholder="Ej: Macal.cl">
 
         <div class="row">
             <div class="col">
@@ -214,33 +219,39 @@
             </div>
         </div>
 
-        <h2 style="font-size: 1rem; border:none; margin-bottom: 5px; color: var(--text-light);">Costos Fijos (Editables)</h2>
-        <div class="result-box">
-            <div class="result-row">
-                <span>⚖️ Abogado</span>
-                <input type="number" inputmode="numeric" id="costo_abogado" value="1600000" class="input-editable">
+        <div id="container_costos_normales">
+            <h2 style="font-size: 1rem; border:none; margin-bottom: 5px; color: var(--text-light);">Costos Fijos (Editables)</h2>
+            <div class="result-box">
+                <div class="result-row">
+                    <span>⚖️ Abogado</span>
+                    <input type="number" inputmode="numeric" id="costo_abogado" value="1600000" class="input-editable">
+                </div>
+                <div class="result-row">
+                    <span>📝 Notaría</span>
+                    <input type="number" inputmode="numeric" id="costo_notaria" value="300000" class="input-editable">
+                </div>
+                <div class="result-row">
+                    <span>🏛️ CBR</span>
+                    <input type="number" inputmode="numeric" id="costo_cbr" value="300000" class="input-editable">
+                </div>
+                <div class="result-row">
+                    <span>🔓 Alzamientos</span>
+                    <input type="number" inputmode="numeric" id="costo_alzamientos" value="150000" class="input-editable">
+                </div>
+                <div class="result-row">
+                    <span>⚖️ Judiciales</span>
+                    <input type="number" inputmode="numeric" id="costo_judiciales" value="300000" class="input-editable">
+                </div>
+                
+                <div class="result-row">
+                    <span>🔍 Búsqueda (2%)</span>
+                    <span id="disp_busqueda" class="brand-text">--</span>
+                </div>
             </div>
-            <div class="result-row">
-                <span>📝 Notaría</span>
-                <input type="number" inputmode="numeric" id="costo_notaria" value="300000" class="input-editable">
-            </div>
-            <div class="result-row">
-                <span>🏛️ CBR</span>
-                <input type="number" inputmode="numeric" id="costo_cbr" value="300000" class="input-editable">
-            </div>
-            <div class="result-row">
-                <span>🔓 Alzamientos</span>
-                <input type="number" inputmode="numeric" id="costo_alzamientos" value="150000" class="input-editable">
-            </div>
-            <div class="result-row">
-                <span>⚖️ Judiciales</span>
-                <input type="number" inputmode="numeric" id="costo_judiciales" value="300000" class="input-editable">
-            </div>
-            
-            <div class="result-row">
-                <span>🔍 Búsqueda (2%)</span>
-                <span id="disp_busqueda" class="brand-text">--</span>
-            </div>
+        </div>
+
+        <div id="container_msg_macal" style="display:none; text-align: center; color: #666; font-size: 0.9rem; margin-top: 15px; background: #e8f4f8; padding: 10px; border-radius: 8px;">
+            <p>ℹ️ En <strong>Modo Macal</strong>, los costos de Escrituración, Notaría y CBR se calculan automáticamente según las fórmulas oficiales en el siguiente paso.</p>
         </div>
 
         <div class="nav-buttons">
@@ -250,6 +261,35 @@
     </div>
 
     <div id="slide3" class="slide">
+        
+        <div id="macal_options" class="macal-option-box" style="display:none;">
+            <h3 style="margin-top:0; color:var(--dosh-blue); font-size:1rem;">⚙️ Configuración Macal</h3>
+            
+            <label>Tipo de Comisión</label>
+            <div style="display:flex; gap:15px; margin-bottom: 15px;">
+                <label style="font-weight:normal; display:flex; align-items:center; gap:5px;">
+                    <input type="radio" name="macal_tipo" id="radio_normal" value="normal" checked> 
+                    Normal (3% + IVA)
+                </label>
+                <label style="font-weight:normal; display:flex; align-items:center; gap:5px;">
+                    <input type="radio" name="macal_tipo" id="radio_liq" value="liq"> 
+                    Liq. Concursal (2% + IVA)
+                </label>
+            </div>
+
+            <div class="result-row">
+                <span>📝 Notaría (Base $70k + 0.1%)</span>
+                <span class="small-note" style="text-align: right;">Automático</span>
+            </div>
+            <div class="result-row">
+                <span>🏛️ CBR (0.4%, Mín $250k)</span>
+                <input type="number" inputmode="numeric" id="macal_cbr_editable" value="250000" class="input-editable">
+            </div>
+            <div class="result-row" style="margin-top:5px;">
+                <span>📄 Escrituración (UF)</span>
+                <span id="disp_escritura_uf" class="brand-text" style="font-size:0.9rem;">-- UF + IVA</span>
+            </div>
+        </div>
         <h2>3. Proyección Venta</h2>
         
         <label>Precio Venta Estimado ($)</label>
@@ -267,15 +307,15 @@
         
         <div class="result-box">
              <div class="result-row">
-                <span>🤝 Comisión (2%)</span>
+                <span>🤝 Comisión Venta (2%)</span>
                 <span id="disp_comision" class="brand-text">--</span>
             </div>
             <div class="result-row">
-                <span>🧾 IVA (19%)</span>
+                <span>🧾 IVA Venta (19%)</span>
                 <span id="disp_iva" class="brand-text">--</span>
             </div>
-            <div class="result-row">
-                 <span>📄 Legal Venta</span>
+            <div class="result-row" id="row_legal_venta">
+                 <span>📄 Legal Venta (Propia)</span>
                  <input type="number" inputmode="numeric" id="costo_legal_venta" value="100000" class="input-editable">
             </div>
         </div>
@@ -300,7 +340,6 @@
                     <span>📅 Interés Total Acumulado</span>
                     <span id="res_interes_total" class="red-text">$ 0</span>
                 </div>
-                <div style="text-align: center; font-size: 0.7rem; color: #666; margin-top: 3px;">(Calculado sobre flujo total de egresos)</div>
             </div>
 
             <div class="result-row">
@@ -356,6 +395,7 @@
             <button class="btn-back" py-click="ir_slide_3">← Editar</button>
         </div>
     </div>
+    
     <div id="sec_ia" style="margin-top: 30px; border-top: 2px dashed #ccc; padding-top: 20px; display: none;">
         <h2>🤖 Asesoría con IA (Groq)</h2>
         <button onclick="consultarGroq()" 
@@ -376,6 +416,7 @@
     from js import jspdf
     import datetime
 
+    # --- DATOS REGIONALES ---
     CHILE_DATA = {
         "Arica y Parinacota": ["Arica", "Camarones", "Putre", "General Lagos"],
         "Tarapacá": ["Iquique", "Alto Hospicio", "Pozo Almonte", "Camiña", "Colchane", "Huara", "Pica"],
@@ -395,13 +436,16 @@
         "Magallanes": ["Punta Arenas", "Laguna Blanca", "Río Verde", "San Gregorio", "Cabo de Hornos", "Antártica", "Porvenir", "Primavera", "Timaukel", "Natales", "Torres del Paine"]
     }
 
-    # VALORES POR DEFECTO
+    # --- CONSTANTES ---
+    VALOR_UF = 38000 # Valor referencia UF para cálculos
     DEF_ABOGADO = 1600000
     DEF_NOTARIA = 300000
     DEF_CBR = 300000
     DEF_ALZAMIENTOS = 150000
     DEF_JUDICIALES = 300000
     DEF_LEGAL_VENTA = 100000
+    
+    MODO_ACTUAL = "NORMAL"
 
     def format_money(valor):
         return "${:,.0f}".format(valor).replace(",", ".")
@@ -424,12 +468,10 @@
             opt.value = c
             sel_com.add(opt)
 
-    # --- NAVEGACIÓN ACTUALIZADA ---
+    # --- NAVEGACIÓN ---
     def cambiar_slide(id_mostrar):
-        # Agregamos el nuevo slide_selection a la lista
         ids = ["slide_selection", "slide1", "slide2", "slide3", "slide_final"]
         
-        # Actualizar subtítulo y visibilidad de IA según la pantalla
         subt = document.getElementById("main_subtitle")
         sec_ia = document.getElementById("sec_ia")
         
@@ -451,20 +493,40 @@
                 el.classList.remove("active")
         window.scrollTo(0, 0)
 
-    # --- NUEVAS FUNCIONES DE MENÚ ---
+    # --- FUNCIONES DE MODO ---
     def ir_menu_principal(e):
         cambiar_slide("slide_selection")
     
     def iniciar_metodo_normal(e):
-        # Aquí iremos al slide 1 del método normal
+        global MODO_ACTUAL
+        MODO_ACTUAL = "NORMAL"
+        
+        # Mostrar costos normales en slide 2
+        document.getElementById("container_costos_normales").style.display = "block"
+        document.getElementById("container_msg_macal").style.display = "none"
+        
+        # Ocultar opciones Macal en Slide 3
+        document.getElementById("macal_options").style.display = "none"
+        
         cambiar_slide("slide1")
         
-    # Funciones de navegación existentes
+    def iniciar_metodo_macal(e):
+        global MODO_ACTUAL
+        MODO_ACTUAL = "MACAL"
+        
+        # Ocultar inputs de costos normales (se calculan auto)
+        document.getElementById("container_costos_normales").style.display = "none"
+        document.getElementById("container_msg_macal").style.display = "block"
+        
+        # Mostrar opciones Macal en Slide 3
+        document.getElementById("macal_options").style.display = "block"
+        
+        cambiar_slide("slide1")
+        
     def ir_slide_1(e): cambiar_slide("slide1")
     def ir_slide_2(e): cambiar_slide("slide2")
     def ir_slide_3(e): cambiar_slide("slide3")
 
-    # --- RESETEO (MODIFICADO) ---
     def nueva_operacion(e):
         ids_text = ["input_nombre", "input_direccion", "input_superficie", "input_detalles", "input_fuente"]
         for i in ids_text: document.getElementById(i).value = ""
@@ -473,7 +535,7 @@
                    "input_venta_vivienda", "input_mejoras", "cant_mes"]
         for i in ids_num: document.getElementById(i).value = "0"
         
-        # Reset Costos Fijos
+        # Reset Costos Default
         document.getElementById("costo_abogado").value = str(DEF_ABOGADO)
         document.getElementById("costo_notaria").value = str(DEF_NOTARIA)
         document.getElementById("costo_cbr").value = str(DEF_CBR)
@@ -482,14 +544,16 @@
         document.getElementById("costo_legal_venta").value = str(DEF_LEGAL_VENTA)
         document.getElementById("input_mejoras").value = "3000000"
         
-        # Reset fechas
+        # Reset Macal
+        document.getElementById("radio_normal").checked = True
+        document.getElementById("macal_cbr_editable").value = "250000"
+
         document.getElementById("input_fecha_remate").value = ""
         document.getElementById("input_fecha_rescate").value = ""
-
         document.getElementById("select_region").selectedIndex = 0
         document.getElementById("select_comuna").innerHTML = "<option>...</option>"
 
-        spans_calc = ["disp_busqueda", "disp_comision", "disp_iva", "res_interes_mensual", "res_interes_total", "res_roi", "res_rentabilidad"]
+        spans_calc = ["disp_busqueda", "disp_comision", "disp_iva", "res_interes_mensual", "res_interes_total", "res_roi", "res_rentabilidad", "disp_escritura_uf"]
         for s in spans_calc: 
             elem = document.getElementById(s)
             if elem: elem.innerText = "--"
@@ -500,16 +564,12 @@
         document.getElementById("mensaje").innerText = ""
         document.getElementById("breakdown_gastos").innerHTML = ""
         document.getElementById("breakdown_ingresos").innerHTML = ""
-        document.getElementById("resultado_ai").innerHTML = ""
         document.getElementById("resultado_ai").style.display = "none"
-        
-        # Limpiar imagen
         document.getElementById("input_imagen").value = ""
         document.getElementById("preview-img").src = ""
         document.getElementById("preview-container").style.display = "none"
         document.querySelector(".btn-file").innerText = "📷 Toca para subir foto"
 
-        # AL RESETEAR, VOLVEMOS AL MENÚ PRINCIPAL
         cambiar_slide("slide_selection")
 
     # --- CÁLCULOS ---
@@ -525,8 +585,20 @@
     def crear_titulo_desglose(titulo):
         return f'<div class="breakdown-title">{titulo}</div>'
 
+    # --- LÓGICA MACAL: TRAMOS ESCRITURACIÓN ---
+    def calcular_escritura_macal(precio_adj):
+        # Tramos UF
+        if precio_adj <= 9999999: uf = 16
+        elif precio_adj <= 49999999: uf = 26
+        elif precio_adj <= 69999999: uf = 32
+        elif precio_adj <= 99999999: uf = 33
+        elif precio_adj <= 149999999: uf = 37
+        else: uf = 42
+        
+        return uf, (uf * VALOR_UF) * 1.19 # Valor + IVA
+
     def calcular_y_mostrar_final(e):
-        # 1. Inputs Generales
+        # 1. Inputs
         postura_min = get_val("input_postura_min")
         oferta_max = get_val("input_oferta_max") 
         garantia = get_val("input_garantia")
@@ -534,25 +606,79 @@
         costo_mejoras = get_val("input_mejoras")
         meses_interes = get_val("cant_mes")
         
-        # 2. Inputs de Costos Fijos
-        c_abogado = get_val("costo_abogado")
-        c_notaria = get_val("costo_notaria")
-        c_cbr = get_val("costo_cbr")
-        c_alzamientos = get_val("costo_alzamientos")
-        c_judiciales = get_val("costo_judiciales")
+        # Corrección de nombres de variables para que coincidan con la lógica
+        costo_alzamientos = get_val("costo_alzamientos") 
         c_legal_venta = get_val("costo_legal_venta")
 
-        # 3. Cálculos Variables
-        suma_ofertas = postura_min + oferta_max
-        honorarios_busqueda = suma_ofertas * 0.02
+        # --- SELECCIÓN DE LÓGICA ---
+        precio_adjudicacion = oferta_max if oferta_max > 0 else postura_min
+
+        if MODO_ACTUAL == "MACAL":
+            # 1. Comisión Macal
+            if document.getElementById("radio_liq").checked:
+                tasa_comision = 0.02
+                label_comision_compra = "Comisión Liq. (2% + IVA)"
+            else:
+                tasa_comision = 0.03
+                label_comision_compra = "Comisión Normal (3% + IVA)"
+            
+            costo_comision_compra = (precio_adjudicacion * tasa_comision) * 1.19
+
+            # 2. Escrituración (Post-Venta)
+            uf_cobro, costo_escritura = calcular_escritura_macal(precio_adjudicacion)
+            document.getElementById("disp_escritura_uf").innerText = f"{uf_cobro} UF + IVA"
+
+            # 3. Notaría
+            costo_notaria = 70000 + (precio_adjudicacion * 0.001)
+
+            # 4. CBR
+            cbr_usuario = get_val("macal_cbr_editable")
+            calc_cbr_min = precio_adjudicacion * 0.004
+            
+            if cbr_usuario == 250000:
+                costo_cbr = 250000 if calc_cbr_min < 250000 else calc_cbr_min
+                document.getElementById("macal_cbr_editable").value = str(int(costo_cbr))
+            else:
+                costo_cbr = cbr_usuario
+
+            # 5. Búsqueda (2% de Suma)
+            costo_busqueda = (postura_min + oferta_max) * 0.02
+            label_busqueda = "Búsqueda (2% Suma)"
+            
+            costo_abogado = 0
+            costo_judiciales = 0 
+
+        else:
+            # MODO NORMAL
+            costo_abogado = get_val("costo_abogado")
+            costo_notaria = get_val("costo_notaria")
+            costo_cbr = get_val("costo_cbr")
+            costo_judiciales = get_val("costo_judiciales")
+            
+            # Búsqueda tradicional
+            suma_ofertas = postura_min + oferta_max 
+            costo_busqueda = suma_ofertas * 0.02
+            label_busqueda = "Honorarios Búsqueda (2%)"
+            
+            costo_comision_compra = 0
+            label_comision_compra = ""
+            costo_escritura = 0
+
+        # --- CÁLCULOS FINALES COMUNES ---
         comision_venta = venta_vivienda * 0.02
         iva_venta = (venta_vivienda / 1.19) * 0.19
         
-        # 4. BASE DE CÁLCULO INTERÉS (Sin Deudas)
-        gastos_fijos_compra = c_abogado + c_notaria + c_cbr + c_alzamientos + c_judiciales
+        # Total Gastos Fijos Compra
+        gastos_operacionales = (costo_abogado + 
+                                costo_notaria + 
+                                costo_cbr + 
+                                costo_alzamientos + 
+                                costo_judiciales + 
+                                costo_escritura + 
+                                costo_comision_compra +
+                                costo_busqueda)
         
-        base_calculo_interes = (honorarios_busqueda + 
-                                gastos_fijos_compra + 
+        base_calculo_interes = (gastos_operacionales + 
                                 garantia + 
                                 postura_min + 
                                 oferta_max + 
@@ -564,23 +690,19 @@
         interes_mensual = base_calculo_interes * 0.0007
         interes_total = interes_mensual * meses_interes
 
-        # 5. Gastos Finales
         subtotal_gasto = base_calculo_interes + interes_total
-
-        # INGRESOS
         total_ingresos = venta_vivienda + garantia
         
-        # RESULTADOS
         saldo_favor = total_ingresos - subtotal_gasto
         impuesto = saldo_favor * 0.27 if saldo_favor > 0 else 0
         saldo_final = saldo_favor - impuesto
 
-        # KPIs
         roi = (saldo_final / subtotal_gasto) * 100 if subtotal_gasto > 0 else 0
         rentabilidad = (saldo_final / venta_vivienda) * 100 if venta_vivienda > 0 else 0
 
-        # 6. Actualizar UI
-        document.getElementById("disp_busqueda").innerText = format_money(honorarios_busqueda)
+        # UI Updates
+        document.getElementById("disp_busqueda").innerText = format_money(costo_busqueda)
+
         document.getElementById("disp_comision").innerText = format_money(comision_venta)
         document.getElementById("disp_iva").innerText = format_money(iva_venta)
         
@@ -596,26 +718,35 @@
         document.getElementById("res_roi").innerText = "{:.1f}%".format(roi)
         document.getElementById("res_rentabilidad").innerText = "{:.1f}%".format(rentabilidad)
 
-        # 7. DESGLOSE
+        # DESGLOSE HTML
         html_gastos = ""
         html_gastos += crear_titulo_desglose("1. Inversión Inicial")
         html_gastos += crear_fila_desglose("Postura Mínima", postura_min)
         html_gastos += crear_fila_desglose("Oferta Máxima", oferta_max)
-        html_gastos += crear_fila_desglose("Garantía (Vale Vista)", garantia)
+        html_gastos += crear_fila_desglose("Garantía", garantia)
         
         html_gastos += crear_titulo_desglose("2. Gastos Operacionales")
-        html_gastos += crear_fila_desglose("Honorarios Búsqueda", honorarios_busqueda)
-        html_gastos += crear_fila_desglose("Abogado", c_abogado)
-        html_gastos += crear_fila_desglose("Notaría", c_notaria)
-        html_gastos += crear_fila_desglose("CBR", c_cbr)
-        html_gastos += crear_fila_desglose("Alzamientos", c_alzamientos)
-        html_gastos += crear_fila_desglose("Judiciales", c_judiciales)
+        html_gastos += crear_fila_desglose(label_busqueda, costo_busqueda)
+        
+        if MODO_ACTUAL == "MACAL":
+            html_gastos += crear_fila_desglose(label_comision_compra, costo_comision_compra)
+            html_gastos += crear_fila_desglose(f"Escrituración ({uf_cobro} UF+IVA)", costo_escritura)
+        else:
+            html_gastos += crear_fila_desglose("Abogado", costo_abogado)
+
+        html_gastos += crear_fila_desglose("Notaría", costo_notaria)
+        html_gastos += crear_fila_desglose("CBR", costo_cbr)
+        
+        if MODO_ACTUAL == "NORMAL":
+             html_gastos += crear_fila_desglose("Judiciales", costo_judiciales)
+
+        html_gastos += crear_fila_desglose("Alzamientos", costo_alzamientos)
         
         html_gastos += crear_titulo_desglose("3. Habilitación y Venta")
-        html_gastos += crear_fila_desglose("Mejoras Vivienda", costo_mejoras)
+        html_gastos += crear_fila_desglose("Mejoras", costo_mejoras)
         html_gastos += crear_fila_desglose("IVA Débito", iva_venta)
-        html_gastos += crear_fila_desglose("Comisión Venta (2%)", comision_venta)
-        html_gastos += crear_fila_desglose("Documentos Legales", c_legal_venta)
+        html_gastos += crear_fila_desglose("Comisión Venta", comision_venta)
+        html_gastos += crear_fila_desglose("Legal Venta", c_legal_venta)
         
         html_gastos += crear_titulo_desglose("4. Costo Financiero")
         html_gastos += crear_fila_desglose(f"Interés ({meses_interes} meses)", interes_total)
@@ -632,173 +763,72 @@
 
     # --- PDF ---
     def generar_pdf_completo(e):
-        # Recalcular todo para el PDF
-        postura_min = get_val("input_postura_min")
-        oferta_max = get_val("input_oferta_max")
-        garantia = get_val("input_garantia")
-        venta_vivienda = get_val("input_venta_vivienda")
-        costo_mejoras = get_val("input_mejoras")
-        meses_interes = get_val("cant_mes")
+        # Recalcular para asegurar datos
+        calcular_y_mostrar_final(None)
         
-        c_abogado = get_val("costo_abogado")
-        c_notaria = get_val("costo_notaria")
-        c_cbr = get_val("costo_cbr")
-        c_alzamientos = get_val("costo_alzamientos")
-        c_judiciales = get_val("costo_judiciales")
-        c_legal_venta = get_val("costo_legal_venta")
-        
-        suma_ofertas = postura_min + oferta_max
-        honorarios_busqueda = suma_ofertas * 0.02
-        comision_venta = venta_vivienda * 0.02
-        iva_venta = (venta_vivienda / 1.19) * 0.19
-        
-        gastos_fijos_compra = c_abogado + c_notaria + c_cbr + c_alzamientos + c_judiciales
-        
-        base_calculo_interes = (honorarios_busqueda + 
-                                gastos_fijos_compra + 
-                                garantia + 
-                                postura_min + 
-                                oferta_max + 
-                                costo_mejoras + 
-                                comision_venta + 
-                                c_legal_venta + 
-                                iva_venta)
-
-        interes_mensual = base_calculo_interes * 0.0007
-        interes_total = interes_mensual * meses_interes
-        
-        subtotal_gasto = base_calculo_interes + interes_total
-        total_ingresos = venta_vivienda + garantia
-        saldo_favor = total_ingresos - subtotal_gasto
-        impuesto = saldo_favor * 0.27 if saldo_favor > 0 else 0
-        saldo_final = saldo_favor - impuesto
-
         nombre = document.getElementById("input_nombre").value
+        str_remate = document.getElementById("input_fecha_remate").value
         
-        # Info extra
-        str_f_remate = document.getElementById("input_fecha_remate").value or "No indicada"
-        str_f_rescate = document.getElementById("input_fecha_rescate").value or "No indicada"
-        str_fuente = document.getElementById("input_fuente").value or "No indicada"
+        # Recuperar totales visuales
+        ingresos = document.getElementById("res_total_ingresos").innerText
+        egresos = document.getElementById("res_subtotal_gastos").innerText
+        utilidad = document.getElementById("res_saldo_final_liquido").innerText
         
-        img_element = document.getElementById("preview-img")
-        notas_raw = document.getElementById("input_detalles").value
-        notas_final = notas_raw.strip() if notas_raw.strip() else "NO NOTA"
-
         doc = window.jspdf.jsPDF.new()
+        doc.setFont("helvetica", "bold"); doc.setFontSize(22)
         
-        doc.setFont("helvetica", "bold")
-        doc.setFontSize(20)
-        doc.text("FICHA ECONOMICA DE REMATE", 20, 25)
-        
-        if img_element.src and "data:image" in img_element.src:
-            try:
-                orig_w = img_element.naturalWidth
-                orig_h = img_element.naturalHeight
-                max_w = 50; max_h = 50
-                ratio = orig_w / orig_h
-                if ratio > 1: final_w = max_w; final_h = max_w / ratio
-                else: final_h = max_h; final_w = max_h * ratio
-                doc.addImage(img_element.src, "JPEG", 140, 10, final_w, final_h)
-            except: pass 
-
-        doc.setFontSize(12)
-        doc.text(f"Oportunidad: {nombre}", 20, 40)
-        
-        doc.setFontSize(10)
-        doc.text(f"Fecha Remate: {str_f_remate} | Fecha Rescate: {str_f_rescate}", 20, 48)
-        doc.text(f"Fuente: {str_fuente}", 20, 54)
-        
-        doc.setFontSize(12)
-        doc.text(f"Ubicación: {document.getElementById('select_comuna').value}, {document.getElementById('select_region').value}", 20, 64)
-        doc.text(f"Dirección: {document.getElementById('input_direccion').value}", 20, 72)
-        
-        y_pos = 85
-        if notas_final == "NO NOTA":
-            doc.setTextColor(220, 53, 69); doc.text(f"Estado/Notas: {notas_final}", 20, y_pos); doc.setTextColor(0, 0, 0)
+        if MODO_ACTUAL == "MACAL":
+            doc.setTextColor(0, 59, 115) # Azul Dosh
+            doc.text("FICHA EVALUACIÓN MACAL", 20, 25)
         else:
-            doc.setFont("helvetica", "normal"); doc.setFontSize(10)
-            split_notas = doc.splitTextToSize(f"Notas: {notas_final}", 170)
-            doc.text(split_notas, 20, y_pos)
-            y_pos += (len(split_notas) * 5) 
-
-        doc.line(20, y_pos + 5, 190, y_pos + 5)
-        y = y_pos + 20
+            doc.text("FICHA EVALUACIÓN REMATE", 20, 25)
+            
+        doc.setTextColor(0, 0, 0); doc.setFontSize(12)
+        doc.text(f"Oportunidad: {nombre}", 20, 40)
+        doc.text(f"Fecha Remate: {str_remate}", 20, 48)
         
-        # --- DETALLE TIPO BOLETA ---
-        doc.setFontSize(14); doc.setFont("helvetica", "bold")
-        doc.text("Detalle Financiero", 20, y); y += 10
-        doc.setFontSize(10); doc.setFont("helvetica", "normal")
+        doc.setDrawColor(156, 191, 40) # Verde Dosh
+        doc.line(20, 55, 190, 55)
         
-        doc.text("1. INVERSION INICIAL", 20, y); y += 5
-        doc.text(f"   - Postura + Oferta + Garantia: {format_money(postura_min + oferta_max + garantia)}", 20, y); y+=8
+        doc.setFontSize(14); doc.text("Resumen Financiero", 20, 70)
+        doc.setFontSize(11)
+        doc.text(f"Total Ingresos: {ingresos}", 20, 80)
+        doc.text(f"Total Egresos: {egresos}", 20, 88)
         
-        doc.text("2. GASTOS OPERACIONALES", 20, y); y += 5
-        doc.text(f"   - Honorarios y Legal: {format_money(honorarios_busqueda + gastos_fijos_compra)}", 20, y); y+=8
-        
-        doc.text("3. COSTOS FINANCIEROS", 20, y); y += 5
-        doc.text(f"   - Interes Mensual (0.07%): {format_money(interes_mensual)}", 20, y); y+=5
-        doc.text(f"   - Total Intereses ({meses_interes} meses): {format_money(interes_total)}", 20, y); y+=8
-        
-        doc.text("4. HABILITACION Y VENTA", 20, y); y += 5
-        doc.text(f"   - Mejoras + Comision + Legal: {format_money(costo_mejoras + comision_venta + c_legal_venta)}", 20, y); y+=5
-        doc.text(f"   - IVA Debito: {format_money(iva_venta)}", 20, y); y+=10
-        
-        doc.line(20, y, 100, y); y+=5
-        doc.setFont("helvetica", "bold")
-        doc.text(f"TOTAL EGRESOS: {format_money(subtotal_gasto)}", 20, y); y+=10
-        doc.text(f"TOTAL INGRESOS: {format_money(total_ingresos)}", 20, y); y+=15
-
-        doc.setFillColor(240, 240, 240); doc.rect(15, y-5, 180, 40, "F")
-        doc.setFontSize(12)
-        doc.text(f"Utilidad Bruta: {format_money(saldo_favor)}", 20, y+5)
-        doc.text(f"Impuesto (27%): - {format_money(impuesto)}", 20, y+15)
         doc.setFontSize(16); doc.setTextColor(0, 100, 0)
-        doc.text(f"UTILIDAD NETA FINAL: {format_money(saldo_final)}", 20, y+30)
+        doc.text(f"UTILIDAD NETA: {utilidad}", 20, 105)
         
         doc.save(f"Ficha_{nombre}.pdf")
-        document.getElementById("mensaje").innerText = "✅ PDF Generado con éxito"
+        document.getElementById("mensaje").innerText = "✅ PDF Generado"
 
     iniciar_app()
 </script>
 
 <script>
     async function consultarGroq() {
-        // 1. Recopilar datos (que Python ya calculó)
         const nombre = document.getElementById('input_nombre').value;
         const totalGastos = document.getElementById('res_subtotal_gastos').innerText;
         const totalIngresos = document.getElementById('res_total_ingresos').innerText;
         const utilidad = document.getElementById('res_saldo_final_liquido').innerText;
         const roi = document.getElementById('res_roi').innerText;
-        const rentabilidad = document.getElementById('res_rentabilidad').innerText;
         const notas = document.getElementById('input_detalles').value;
 
-        // 2. Crear el Prompt
         const prompt = `
-            Actúa como un experto inversionista inmobiliario senior y asesor financiero de la constructora DosH.
-            Analiza los siguientes datos de una oportunidad de remate y dame un veredicto crítico y profesional.
-            
-            DATOS DEL NEGOCIO:
-            - Oportunidad: ${nombre}
-            - Inversión Total (Gastos + Compra): ${totalGastos}
-            - Ingresos Estimados (Venta): ${totalIngresos}
-            - Utilidad Neta Final: ${utilidad}
-            - ROI (Retorno s/ Inversión): ${roi}
-            - Rentabilidad s/ Venta: ${rentabilidad}
-            - Notas adicionales del terreno/propiedad: "${notas}"
+            Actúa como experto inmobiliario. Analiza esta oportunidad de inversión:
+            - Nombre: ${nombre}
+            - Inversión Total: ${totalGastos}
+            - Venta Estimada: ${totalIngresos}
+            - Utilidad Neta: ${utilidad}
+            - ROI: ${roi}
+            - Notas: "${notas}"
 
-            TU TAREA:
-            1. Evalúa si el ROI y la Rentabilidad son atractivos.
-            2. Identifica posibles riesgos.
-            3. Da un veredicto final: ¿Aprobarías esta inversión?
-            4. Se breve, directo y usa formato con viñetas.
+            Dame un veredicto de aprobación (Si/No/Revisar) y 3 puntos clave de riesgo o beneficio. Breve.
         `;
 
-        // 3. UI Loading
         document.getElementById('loading_ai').style.display = 'block';
         document.getElementById('resultado_ai').style.display = 'none';
 
         try {
-            // Llamamos a TU propia API en Vercel
             const response = await fetch('/api/analizar', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -809,12 +839,7 @@
             
             if (data.result) {
                 const resultDiv = document.getElementById('resultado_ai');
-                
-                // Formatear
-                resultDiv.innerHTML = data.result
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n/g, '<br>');
-                
+                resultDiv.innerHTML = data.result.replace(/\n/g, '<br>');
                 resultDiv.style.display = 'block';
                 resultDiv.style.borderLeft = "5px solid #9CBF28";
             } else {
@@ -823,7 +848,7 @@
 
         } catch (error) {
             console.error(error);
-            alert("Error de conexión con el servidor. Asegúrate de que los archivos de Vercel (api/analizar.js) están subidos.");
+            alert("Error de conexión con IA.");
         } finally {
             document.getElementById('loading_ai').style.display = 'none';
         }
@@ -832,4 +857,3 @@
 
 </body>
 </html>
-
