@@ -1,8 +1,7 @@
-// api/analizar.js
 const Groq = require("groq-sdk");
 
 module.exports = async (req, res) => {
-  // Configuración CORS estándar
+  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -11,16 +10,15 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    // 1. Obtener la Key de Groq
     const API_KEY = process.env.GROQ_API_KEY; 
     if (!API_KEY) throw new Error("Falta la GROQ_API_KEY en Vercel");
 
     const { prompt } = req.body;
 
-    // 2. Iniciar Groq
+    // Inicializar Groq
     const groq = new Groq({ apiKey: API_KEY });
 
-    // 3. Pedir el análisis a Llama 3
+    // Pedir análisis (Usamos Llama-3-8b que es rapidísimo)
     const chatCompletion = await groq.chat.completions.create({
       messages: [
         {
@@ -28,8 +26,7 @@ module.exports = async (req, res) => {
           content: prompt,
         },
       ],
-      model: "llama3-8b-8192", // Modelo rápido y gratuito
-      temperature: 0.5,
+      model: "llama3-8b-8192",
     });
 
     const text = chatCompletion.choices[0]?.message?.content || "";
