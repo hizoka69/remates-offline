@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <title>Gestor de Remates</title>
+    
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        /* --- VARIABLES DE MARCA DOSH --- */
+        :root {
+            --dosh-blue: #003B73;       
+            --dosh-green: #9CBF28;      
+            --dosh-green-dark: #7da118; 
+            --dosh-bg: #848586;         
+            --text-main: #333333;
+            --text-light: #777777;
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--dosh-bg); padding: 15px; color: var(--text-main); margin: 0; -webkit-tap-highlight-color: transparent; }
+        .container { max-width: 800px; margin: 0 auto; background: rgb(240, 239, 239); padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0, 59, 115, 0.08); border-top: 5px solid var(--dosh-green); }
+        h1 { color: var(--dosh-blue); font-size: 1.6rem; margin-top: 0; text-align: center; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase; }
+        .subtitle { text-align: center; color: var(--text-light); font-size: 0.9rem; margin-bottom: 25px; font-weight: 500; }
+        .slide { display: none; animation: slideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .slide.active { display: block; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        h2 { font-size: 1.1rem; color: var(--dosh-blue); border-bottom: 2px solid var(--dosh-green); padding-bottom: 8px; margin-top: 5px; margin-bottom: 20px; display: inline-block; width: 100%; }
+        .row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .col { flex: 1; }
+        @media (max-width: 600px) { .row { flex-direction: column; gap: 15px; } .container { padding: 20px; min-height: 90vh; } h2 { font-size: 1.2rem; } .slide { padding-bottom: 20px; } }
+        label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--dosh-blue); }
+        .small-note { font-size: 0.75rem; color: #999; display: block; margin-bottom: 4px; }
+        input, select, textarea { width: 100%; padding: 14px; border: 2px solid #e1e5eb; border-radius: 10px; box-sizing: border-box; font-size: 16px; background-color: #fafafa; color: #333; transition: all 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color: var(--dosh-blue); outline: none; background-color: #fff; box-shadow: 0 0 0 4px rgba(0, 59, 115, 0.1); }
+        .input-editable { background-color: #fff; border: 1px solid #ccc; padding: 8px; font-size: 0.95rem; text-align: right; width: 140px; }
+        .input-editable:focus { border-color: var(--dosh-green); background-color: #fefffa; }
+        input:disabled { background-color: #f0f2f5; color: #888; border-color: #eee; }
+        .file-upload-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; margin-bottom: 15px; }
+        .btn-file { border: 2px dashed var(--dosh-blue); color: var(--dosh-blue); background-color: #f8f9fa; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; text-align: center; display: block; box-sizing: border-box; }
+        .file-upload-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; width: 100%; }
+        #preview-container { text-align: center; margin-bottom: 15px; display: none; }
+        #preview-img { max-width: 100%; max-height: 200px; border-radius: 8px; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .nav-buttons { display: flex; gap: 12px; margin-top: 30px; }
+        button { padding: 15px; border: none; border-radius: 10px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: transform 0.1s, opacity 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        button:active { transform: scale(0.97); }
+        .btn-next { background-color: var(--dosh-blue); color: white; flex: 1; }
+        .btn-back { background-color: #e2e6ea; color: var(--text-main); flex: 0.4; }
+        .btn-pdf { background-color: var(--dosh-green); color: white; width: 100%; margin-top: 15px; font-size: 1.1rem; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .btn-new { background-color: #5d7a96; color: white; width: 100%; margin-top: 15px; }
+        .result-box { background: #fff; border: 1px solid #e1e5eb; border-radius: 12px; padding: 15px; margin-top: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .result-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f2f5; align-items: center; }
+        .result-row span:first-child { color: #555; font-size: 0.9rem; flex:1; }
+        .result-row span:last-child { font-weight: 600; font-family: 'Segoe UI', monospace; font-size: 1rem; color: #333; }
+        .green-text { color: var(--dosh-green-dark); font-weight: bold !important; }
+        .red-text { color: #d63384; }
+        .brand-text { color: var(--dosh-blue); font-weight: bold; }
+        .result-row.total-final { background-color: #f4f9e6; border: 1px solid var(--dosh-green); border-radius: 8px; padding: 15px; margin-top: 15px; color: var(--dosh-blue); }
+        .result-row.total-final span:last-child { color: var(--dosh-blue); font-size: 1.5rem; font-weight: 800; }
+        details { margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
+        summary { padding: 12px; background-color: #f8f9fa; color: var(--dosh-blue); font-weight: 600; font-size: 0.85rem; text-align: right; list-style: none; outline: none; cursor: pointer; }
+        summary:after { content: " ▼ Ver Detalle"; font-size: 0.8rem; opacity: 0.8; }
+        details[open] summary:after { content: " ▲ Ocultar"; }
+        .breakdown-list { background: #fff; padding: 15px; }
+        .breakdown-item { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 8px; color: #666; }
+        .breakdown-title { background-color: var(--dosh-blue); color: white; padding: 5px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-align: center; margin: 15px 0 10px 0; text-transform: uppercase; letter-spacing: 1px; }
+        .breakdown-title:first-child { margin-top: 0; }
+        #mensaje { text-align: center; margin-top: 15px; font-weight: bold; color: var(--dosh-green-dark); min-height: 24px; }
+        .interest-highlight { background-color: #eef2f7; border-left: 4px solid var(--dosh-blue); padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+        .interest-highlight .result-row { border-bottom: 1px dashed #ccc; padding: 5px 0; }
+        .interest-highlight .result-row:last-child { border-bottom: none; }
+    </style>
+    
+    <script>
+        function procesarImagen(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var img = document.getElementById('preview-img');
+                    img.src = e.target.result;
+                    document.getElementById('preview-container').style.display = 'block';
+                    document.querySelector('.btn-file').innerText = "✅ Foto cargada";
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+</head>
+<body>
+
+<div class="container">
+    <h1>Gestor De Remates</h1>
+    <p class="subtitle">Evaluación Económica de Remates</p>
+
+    <div id="slide1" class="slide active">
+        <h2>1. Ficha Técnica</h2>
+        
+        <label>Imagen de la Propiedad (Opcional)</label>
+        <div class="file-upload-wrapper">
+            <div class="btn-file">📷 Toca para subir foto</div>
+            <input type="file" id="input_imagen" accept="image/*" onchange="procesarImagen(this)">
+        </div>
+        <div id="preview-container">
+            <img id="preview-img" src="" alt="Vista previa">
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label>Región</label>
+                <select id="select_region" py-change="actualizar_comunas">
+                    <option value="" disabled selected>Selecciona región</option>
+                </select>
+            </div>
+            <div class="col">
+                <label>Comuna</label>
+                <select id="select_comuna"><option>...</option></select>
+            </div>
+        </div>
+
+        <label>Nombre Oportunidad</label>
+        <input type="text" id="input_nombre" placeholder="Ej: Casa Centro">
+
+        <div class="row">
+            <div class="col">
+                <label>Fecha Remate</label>
+                <input type="date" id="input_fecha_remate">
+            </div>
+            <div class="col">
+                <label>Fecha Rescate</label>
+                <input type="date" id="input_fecha_rescate">
+            </div>
+        </div>
+        <label>Fuente de Información</label>
+        <input type="text" id="input_fuente" placeholder="Ej: Diario Talca">
+
+        <div class="row">
+            <div class="col">
+                <label>Dirección</label>
+                <input type="text" id="input_direccion">
+            </div>
+            <div class="col">
+                <label>Superficie (m²)</label>
+                <input type="text" inputmode="numeric" pattern="[0-9]*" id="input_superficie" 
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            </div>
+        </div>
+
+        <label>Notas / Estado</label>
+        <textarea id="input_detalles" rows="3"></textarea>
+
+        <div class="nav-buttons">
+            <button class="btn-back" style="visibility: hidden;">Atrás</button>
+            <button class="btn-next" py-click="ir_slide_2">Siguiente ➝</button>
+        </div>
+    </div>
+
+    <div id="slide2" class="slide">
+        <h2>2. Inversión y Costos</h2>
+        
+        <div class="row">
+            <div class="col">
+                <label>Postura Mínima ($)</label>
+                <input type="number" inputmode="numeric" id="input_postura_min" value="0"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            </div>
+            <div class="col">
+                <label>Oferta Máxima ($)</label>
+                <input type="number" inputmode="numeric" id="input_oferta_max" value="0"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col">
+                <label>Garantía (Vale Vista)</label>
+                <input type="number" inputmode="numeric" id="input_garantia" value="0"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            </div>
+            <div class="col">
+                <label>Meses (Interés)</label>
+                <input type="number" inputmode="numeric" id="cant_mes" value="0"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            </div>
+        </div>
+
+        <h2 style="font-size: 1rem; border:none; margin-bottom: 5px; color: var(--text-light);">Costos Fijos (Editables)</h2>
+        <div class="result-box">
+            <div class="result-row">
+                <span>⚖️ Abogado</span>
+                <input type="number" inputmode="numeric" id="costo_abogado" value="1600000" class="input-editable">
+            </div>
+            <div class="result-row">
+                <span>📝 Notaría</span>
+                <input type="number" inputmode="numeric" id="costo_notaria" value="300000" class="input-editable">
+            </div>
+            <div class="result-row">
+                <span>🏛️ CBR</span>
+                <input type="number" inputmode="numeric" id="costo_cbr" value="300000" class="input-editable">
+            </div>
+            <div class="result-row">
+                <span>🔓 Alzamientos</span>
+                <input type="number" inputmode="numeric" id="costo_alzamientos" value="150000" class="input-editable">
+            </div>
+            <div class="result-row">
+                <span>⚖️ Judiciales</span>
+                <input type="number" inputmode="numeric" id="costo_judiciales" value="300000" class="input-editable">
+            </div>
+            
+            <div class="result-row">
+                <span>🔍 Búsqueda (2%)</span>
+                <span id="disp_busqueda" class="brand-text">--</span>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="btn-back" py-click="ir_slide_1">← Atrás</button>
+            <button class="btn-next" py-click="ir_slide_3">Siguiente ➝</button>
+        </div>
+    </div>
+
+    <div id="slide3" class="slide">
+        <h2>3. Proyección Venta</h2>
+        
+        <label>Precio Venta Estimado ($)</label>
+        <span class="small-note">Valor mercado estimado</span>
+        <input type="number" inputmode="numeric" id="input_venta_vivienda" value="0"
+               oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+        
+        <div class="row" style="margin-top: 15px;">
+             <div class="col">
+                <label>🛠️ Mejoras / Reformas</label>
+                <input type="number" inputmode="numeric" id="input_mejoras" value="3000000"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            </div>
+        </div>
+        
+        <div class="result-box">
+             <div class="result-row">
+                <span>🤝 Comisión (2%)</span>
+                <span id="disp_comision" class="brand-text">--</span>
+            </div>
+            <div class="result-row">
+                <span>🧾 IVA (19%)</span>
+                <span id="disp_iva" class="brand-text">--</span>
+            </div>
+            <div class="result-row">
+                 <span>📄 Legal Venta</span>
+                 <input type="number" inputmode="numeric" id="costo_legal_venta" value="100000" class="input-editable">
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="btn-back" py-click="ir_slide_2">← Atrás</button>
+            <button class="btn-next" py-click="calcular_y_mostrar_final">Ver Resultados ➝</button>
+        </div>
+    </div>
+
+    <div id="slide_final" class="slide">
+        <h2>📊 Resumen Financiero</h2>
+        
+        <div class="result-box">
+            
+            <div class="interest-highlight">
+                <div class="result-row">
+                    <span>🏦 Interés Mensual (0.07%)</span>
+                    <span id="res_interes_mensual" class="brand-text">$ 0</span>
+                </div>
+                <div class="result-row">
+                    <span>📅 Interés Total Acumulado</span>
+                    <span id="res_interes_total" class="red-text">$ 0</span>
+                </div>
+                <div style="text-align: center; font-size: 0.7rem; color: #666; margin-top: 3px;">(Calculado sobre flujo total de egresos)</div>
+            </div>
+
+            <div class="result-row">
+                <span>📉 <strong>Total Egresos</strong></span>
+                <span id="res_subtotal_gastos" class="red-text" style="color: #c0392b;">$ 0</span>
+            </div>
+            <details>
+                <summary>Ver Desglose Gastos</summary>
+                <div id="breakdown_gastos" class="breakdown-list"></div>
+            </details>
+
+            <div class="result-row">
+                <span>📈 <strong>Total Ingresos</strong></span>
+                <span id="res_total_ingresos" class="green-text">$ 0</span>
+            </div>
+            <details>
+                <summary>Ver Desglose Ingresos</summary>
+                <div id="breakdown_ingresos" class="breakdown-list"></div>
+            </details>
+
+            <div class="result-row" style="margin-top: 10px; border-top: 2px solid #eee; padding-top: 10px;">
+                <span>💰 Utilidad Bruta</span>
+                <span id="res_saldo_favor" style="font-weight: bold;">$ 0</span>
+            </div>
+
+            <div class="result-row">
+                <span>🏛️ Impuesto (27%)</span>
+                <span id="res_impuesto" class="brand-text">$ 0</span>
+            </div>
+
+            <div class="result-row total-final">
+                <span>🚀 UTILIDAD NETA</span>
+                <span id="res_saldo_final_liquido">$ 0</span>
+            </div>
+            
+            <div class="row" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                <div class="col" style="text-align: center;">
+                    <span style="font-size: 0.8rem; color: #666;">ROI</span><br>
+                    <span id="res_roi" style="font-weight: bold; color: var(--dosh-green-dark);">0%</span>
+                </div>
+                <div class="col" style="text-align: center;">
+                    <span style="font-size: 0.8rem; color: #666;">Rentabilidad</span><br>
+                    <span id="res_rentabilidad" style="font-weight: bold; color: var(--dosh-blue);">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-pdf" py-click="generar_pdf_completo">📥 Descargar Ficha PDF Detallada</button>
+        <button class="btn-new" py-click="nueva_operacion">🔄 Nueva Operación</button>
+        <div id="mensaje"></div>
+
+        <div class="nav-buttons">
+            <button class="btn-back" py-click="ir_slide_3">← Editar</button>
+        </div>
+    </div>
+    <div style="margin-top: 30px; border-top: 2px dashed #ccc; padding-top: 20px;">
+        <h2>🤖 Asesoría con IA (Gemini)</h2>
+        <button onclick="consultarGemini()" 
+                style="background: linear-gradient(45deg, #4285f4, #9b72cb); color: white; width: 100%;">
+            ✨ Analizar Oportunidad con IA
+        </button>
+
+        <div id="loading_ai" style="display:none; text-align: center; margin-top: 15px;">
+            <p>🧠 Analizando números... por favor espera...</p>
+        </div>
+
+        <div id="resultado_ai" style="margin-top: 15px; background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #ddd; display: none; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.5;"></div>
+    </div>
+</div>
+
+<script type="py">
+    from pyscript import document, window
+    from js import jspdf
+    import datetime
+
+    CHILE_DATA = {
+        "Arica y Parinacota": ["Arica", "Camarones", "Putre", "General Lagos"],
+        "Tarapacá": ["Iquique", "Alto Hospicio", "Pozo Almonte", "Camiña", "Colchane", "Huara", "Pica"],
+        "Antofagasta": ["Antofagasta", "Mejillones", "Sierra Gorda", "Taltal", "Calama", "Ollagüe", "San Pedro de Atacama", "Tocopilla", "María Elena"],
+        "Atacama": ["Copiapó", "Caldera", "Tierra Amarilla", "Chañaral", "Diego de Almagro", "Vallenar", "Alto del Carmen", "Freirina", "Huasco"],
+        "Coquimbo": ["La Serena", "Coquimbo", "Andacollo", "La Higuera", "Paihuano", "Vicuña", "Illapel", "Canela", "Los Vilos", "Salamanca", "Ovalle", "Combarbalá", "Monte Patria", "Punitaqui", "Río Hurtado"],
+        "Valparaíso": ["Valparaíso", "Casablanca", "Concón", "Puchuncaví", "Quintero", "Viña del Mar", "Isla de Pascua", "Los Andes", "Calle Larga", "Rinconada", "San Esteban", "La Ligua", "Cabildo", "Papudo", "Petorca", "Zapallar", "Quillota", "Calera", "Hijuelas", "La Cruz", "Nogales", "San Antonio", "Algarrobo", "Cartagena", "El Quisco", "El Tabo", "Santo Domingo", "San Felipe", "Catemu", "Llaillay", "Panquehue", "Putaendo", "Santa María", "Quilpué", "Limache", "Olmué", "Villa Alemana"],
+        "Metropolitana": ["Santiago", "Cerrillos", "Cerro Navia", "Conchalí", "El Bosque", "Estación Central", "Huechuraba", "Independencia", "La Cisterna", "La Florida", "La Granja", "La Pintana", "La Reina", "Las Condes", "Lo Barnechea", "Lo Espejo", "Lo Prado", "Macul", "Maipú", "Ñuñoa", "Pedro Aguirre Cerda", "Peñalolén", "Providencia", "Pudahuel", "Quilicura", "Quinta Normal", "Recoleta", "Renca", "San Joaquín", "San Miguel", "San Ramón", "Vitacura", "Puente Alto", "Pirque", "San José de Maipo", "Colina", "Lampa", "Tiltil", "San Bernardo", "Buin", "Calera de Tango", "Paine", "Melipilla", "Alhué", "Curacaví", "María Pinto", "San Pedro", "Talagante", "El Monte", "Isla de Maipo", "Padre Hurtado", "Peñaflor"],
+        "O'Higgins": ["Rancagua", "Codegua", "Coinco", "Coltauco", "Doñihue", "Graneros", "Las Cabras", "Machalí", "Malloa", "Mostazal", "Olivar", "Peumo", "Pichidegua", "Quinta de Tilcoco", "Rengo", "Requínoa", "San Vicente", "Pichilemu", "La Estrella", "Litueche", "Marchigüe", "Navidad", "Paredones", "San Fernando", "Chépica", "Chimbarongo", "Lolol", "Nancagua", "Palmilla", "Peralillo", "Placilla", "Pumanque", "Santa Cruz"],
+        "Maule": ["Talca", "Constitución", "Curepto", "Empedrado", "Maule", "Pelarco", "Pencahue", "Río Claro", "San Clemente", "San Rafael", "Cauquenes", "Chanco", "Pelluhue", "Curicó", "Hualañé", "Licantén", "Molina", "Rauco", "Romeral", "Sagrada Familia", "Teno", "Vichuquén", "Linares", "Colbún", "Longaví", "Parral", "Retiro", "San Javier", "Villa Alegre", "Yerbas Buenas"],
+        "Ñuble": ["Chillán", "Bulnes", "Cobquecura", "Coelemu", "Coihueco", "Chillán Viejo", "El Carmen", "Ninhue", "Ñiquén", "Pemuco", "Pinto", "Portezuelo", "Quillón", "Quirihue", "Ránquil", "San Carlos", "San Fabián", "San Ignacio", "San Nicolás", "Treguaco", "Yungay"],
+        "Biobío": ["Concepción", "Coronel", "Chiguayante", "Florida", "Hualqui", "Lota", "Penco", "San Pedro de la Paz", "Santa Juana", "Talcahuano", "Tomé", "Hualpén", "Lebu", "Arauco", "Cañete", "Contulmo", "Curanilahue", "Los Álamos", "Tirúa", "Los Ángeles", "Antuco", "Cabrero", "Laja", "Mulchén", "Nacimiento", "Negrete", "Quilleco", "San Rosendo", "Santa Bárbara", "Tucapel", "Yumbel", "Alto Biobío"],
+        "Araucanía": ["Temuco", "Carahue", "Cunco", "Curarrehue", "Freire", "Galvarino", "Gorbea", "Lautaro", "Loncoche", "Melipeuco", "Nueva Imperial", "Padre Las Casas", "Perquenco", "Pitrufquén", "Pucón", "Saavedra", "Teodoro Schmidt", "Toltén", "Vilcún", "Villarrica", "Cholchol", "Angol", "Collipulli", "Curacautín", "Ercilla", "Lonquimay", "Los Sauces", "Lumaco", "Purén", "Renaico", "Traiguén", "Victoria"],
+        "Los Ríos": ["Valdivia", "Corral", "Lanco", "Los Lagos", "Máfil", "Mariquina", "Paillaco", "Panguipulli", "La Unión", "Futrono", "Lago Ranco", "Río Bueno"],
+        "Los Lagos": ["Puerto Montt", "Calbuco", "Cochamó", "Fresia", "Frutillar", "Los Muermos", "Llanquihue", "Maullín", "Puerto Varas", "Castro", "Ancud", "Chonchi", "Curaco de Vélez", "Dalcahue", "Puqueldón", "Queilén", "Quellón", "Quemchi", "Quinchao", "Osorno", "Puerto Octay", "Purranque", "Puyehue", "Río Negro", "San Juan de la Costa", "San Pablo", "Chaitén", "Futaleufú", "Hualaihué", "Palena"],
+        "Aysén": ["Coyhaique", "Lago Verde", "Aysén", "Cisnes", "Guaitecas", "Cochrane", "O'Higgins", "Tortel", "Chile Chico", "Río Ibáñez"],
+        "Magallanes": ["Punta Arenas", "Laguna Blanca", "Río Verde", "San Gregorio", "Cabo de Hornos", "Antártica", "Porvenir", "Primavera", "Timaukel", "Natales", "Torres del Paine"]
+    }
+
+    # VALORES POR DEFECTO
+    DEF_ABOGADO = 1600000
+    DEF_NOTARIA = 300000
+    DEF_CBR = 300000
+    DEF_ALZAMIENTOS = 150000
+    DEF_JUDICIALES = 300000
+    DEF_LEGAL_VENTA = 100000
+
+    def format_money(valor):
+        return "${:,.0f}".format(valor).replace(",", ".")
+
+    def iniciar_app():
+        select = document.getElementById("select_region")
+        for reg in CHILE_DATA.keys():
+            opt = document.createElement("option")
+            opt.text = reg
+            opt.value = reg
+            select.add(opt)
+
+    def actualizar_comunas(event):
+        reg = event.target.value
+        sel_com = document.getElementById("select_comuna")
+        sel_com.innerHTML = ""
+        for c in CHILE_DATA.get(reg, []):
+            opt = document.createElement("option")
+            opt.text = c
+            opt.value = c
+            sel_com.add(opt)
+
+    # --- NAVEGACIÓN ---
+    def cambiar_slide(id_mostrar):
+        ids = ["slide1", "slide2", "slide3", "slide_final"]
+        for i in ids:
+            el = document.getElementById(i)
+            if i == id_mostrar:
+                el.classList.add("active")
+            else:
+                el.classList.remove("active")
+        window.scrollTo(0, 0)
+
+    def ir_slide_1(e): cambiar_slide("slide1")
+    def ir_slide_2(e): cambiar_slide("slide2")
+    def ir_slide_3(e): cambiar_slide("slide3")
+
+    # --- RESETEO ---
+    def nueva_operacion(e):
+        ids_text = ["input_nombre", "input_direccion", "input_superficie", "input_detalles", "input_fuente"]
+        for i in ids_text: document.getElementById(i).value = ""
+
+        ids_num = ["input_postura_min", "input_oferta_max", "input_garantia", 
+                   "input_venta_vivienda", "input_mejoras", "cant_mes"]
+        for i in ids_num: document.getElementById(i).value = "0"
+        
+        # Reset Costos Fijos
+        document.getElementById("costo_abogado").value = str(DEF_ABOGADO)
+        document.getElementById("costo_notaria").value = str(DEF_NOTARIA)
+        document.getElementById("costo_cbr").value = str(DEF_CBR)
+        document.getElementById("costo_alzamientos").value = str(DEF_ALZAMIENTOS)
+        document.getElementById("costo_judiciales").value = str(DEF_JUDICIALES)
+        document.getElementById("costo_legal_venta").value = str(DEF_LEGAL_VENTA)
+        document.getElementById("input_mejoras").value = "3000000"
+        
+        # Reset fechas
+        document.getElementById("input_fecha_remate").value = ""
+        document.getElementById("input_fecha_rescate").value = ""
+
+        document.getElementById("select_region").selectedIndex = 0
+        document.getElementById("select_comuna").innerHTML = "<option>...</option>"
+
+        spans_calc = ["disp_interes", "disp_busqueda", "disp_comision", "disp_iva", "res_interes_mensual", "res_interes_total", "res_roi", "res_rentabilidad"]
+        for s in spans_calc: 
+            elem = document.getElementById(s)
+            if elem: elem.innerText = "--"
+
+        spans_res = ["res_subtotal_gastos", "res_total_ingresos", "res_saldo_favor", "res_impuesto", "res_saldo_final_liquido"]
+        for s in spans_res: document.getElementById(s).innerText = "$ 0"
+            
+        document.getElementById("mensaje").innerText = ""
+        document.getElementById("breakdown_gastos").innerHTML = ""
+        document.getElementById("breakdown_ingresos").innerHTML = ""
+        
+        # Limpiar imagen
+        document.getElementById("input_imagen").value = ""
+        document.getElementById("preview-img").src = ""
+        document.getElementById("preview-container").style.display = "none"
+        document.querySelector(".btn-file").innerText = "📷 Toca para subir foto"
+
+        cambiar_slide("slide1")
+
+    # --- CÁLCULOS ---
+    def get_val(id_elem):
+        v = document.getElementById(id_elem).value
+        if not v: return 0.0
+        try: return float(v)
+        except: return 0.0
+
+    def crear_fila_desglose(label, valor):
+        return f'<div class="breakdown-item"><span>{label}</span><span>{format_money(valor)}</span></div>'
+    
+    def crear_titulo_desglose(titulo):
+        return f'<div class="breakdown-title">{titulo}</div>'
+
+    def calcular_y_mostrar_final(e):
+        # 1. Inputs Generales
+        postura_min = get_val("input_postura_min")
+        oferta_max = get_val("input_oferta_max") 
+        garantia = get_val("input_garantia")
+        venta_vivienda = get_val("input_venta_vivienda")
+        costo_mejoras = get_val("input_mejoras")
+        meses_interes = get_val("cant_mes")
+        
+        # 2. Inputs de Costos Fijos
+        c_abogado = get_val("costo_abogado")
+        c_notaria = get_val("costo_notaria")
+        c_cbr = get_val("costo_cbr")
+        c_alzamientos = get_val("costo_alzamientos")
+        c_judiciales = get_val("costo_judiciales")
+        c_legal_venta = get_val("costo_legal_venta")
+
+        # 3. Cálculos Variables
+        suma_ofertas = postura_min + oferta_max
+        honorarios_busqueda = suma_ofertas * 0.02
+        comision_venta = venta_vivienda * 0.02
+        iva_venta = (venta_vivienda / 1.19) * 0.19
+        
+        # 4. BASE DE CÁLCULO INTERÉS (Sin Deudas)
+        gastos_fijos_compra = c_abogado + c_notaria + c_cbr + c_alzamientos + c_judiciales
+        
+        base_calculo_interes = (honorarios_busqueda + 
+                                gastos_fijos_compra + 
+                                garantia + 
+                                postura_min + 
+                                oferta_max + 
+                                costo_mejoras + 
+                                comision_venta + 
+                                c_legal_venta + 
+                                iva_venta)
+
+        interes_mensual = base_calculo_interes * 0.0007
+        interes_total = interes_mensual * meses_interes
+
+        # 5. Gastos Finales
+        subtotal_gasto = base_calculo_interes + interes_total
+
+        # INGRESOS
+        total_ingresos = venta_vivienda + garantia
+        
+        # RESULTADOS
+        saldo_favor = total_ingresos - subtotal_gasto
+        impuesto = saldo_favor * 0.27 if saldo_favor > 0 else 0
+        saldo_final = saldo_favor - impuesto
+
+        # KPIs
+        roi = (saldo_final / subtotal_gasto) * 100 if subtotal_gasto > 0 else 0
+        rentabilidad = (saldo_final / venta_vivienda) * 100 if venta_vivienda > 0 else 0
+
+        # 6. Actualizar UI
+        document.getElementById("disp_busqueda").innerText = format_money(honorarios_busqueda)
+        document.getElementById("disp_comision").innerText = format_money(comision_venta)
+        document.getElementById("disp_iva").innerText = format_money(iva_venta)
+        
+        document.getElementById("res_interes_mensual").innerText = format_money(interes_mensual)
+        document.getElementById("res_interes_total").innerText = format_money(interes_total)
+
+        document.getElementById("res_subtotal_gastos").innerText = format_money(subtotal_gasto)
+        document.getElementById("res_total_ingresos").innerText = format_money(total_ingresos)
+        document.getElementById("res_saldo_favor").innerText = format_money(saldo_favor)
+        document.getElementById("res_impuesto").innerText = format_money(impuesto)
+        document.getElementById("res_saldo_final_liquido").innerText = format_money(saldo_final)
+        
+        document.getElementById("res_roi").innerText = "{:.1f}%".format(roi)
+        document.getElementById("res_rentabilidad").innerText = "{:.1f}%".format(rentabilidad)
+
+        # 7. DESGLOSE
+        html_gastos = ""
+        html_gastos += crear_titulo_desglose("1. Inversión Inicial")
+        html_gastos += crear_fila_desglose("Postura Mínima", postura_min)
+        html_gastos += crear_fila_desglose("Oferta Máxima", oferta_max)
+        html_gastos += crear_fila_desglose("Garantía (Vale Vista)", garantia)
+        
+        html_gastos += crear_titulo_desglose("2. Gastos Operacionales")
+        html_gastos += crear_fila_desglose("Honorarios Búsqueda", honorarios_busqueda)
+        html_gastos += crear_fila_desglose("Abogado", c_abogado)
+        html_gastos += crear_fila_desglose("Notaría", c_notaria)
+        html_gastos += crear_fila_desglose("CBR", c_cbr)
+        html_gastos += crear_fila_desglose("Alzamientos", c_alzamientos)
+        html_gastos += crear_fila_desglose("Judiciales", c_judiciales)
+        
+        html_gastos += crear_titulo_desglose("3. Habilitación y Venta")
+        html_gastos += crear_fila_desglose("Mejoras Vivienda", costo_mejoras)
+        html_gastos += crear_fila_desglose("IVA Débito", iva_venta)
+        html_gastos += crear_fila_desglose("Comisión Venta (2%)", comision_venta)
+        html_gastos += crear_fila_desglose("Documentos Legales", c_legal_venta)
+        
+        html_gastos += crear_titulo_desglose("4. Costo Financiero")
+        html_gastos += crear_fila_desglose(f"Interés ({meses_interes} meses)", interes_total)
+        
+        document.getElementById("breakdown_gastos").innerHTML = html_gastos
+
+        html_ingresos = ""
+        html_ingresos += crear_titulo_desglose("Entradas de Dinero")
+        html_ingresos += crear_fila_desglose("Venta Vivienda", venta_vivienda)
+        html_ingresos += crear_fila_desglose("Reembolso Garantía", garantia)
+        document.getElementById("breakdown_ingresos").innerHTML = html_ingresos
+
+        cambiar_slide("slide_final")
+
+    # --- PDF ---
+    def generar_pdf_completo(e):
+        # Recalcular todo para el PDF
+        postura_min = get_val("input_postura_min")
+        oferta_max = get_val("input_oferta_max")
+        garantia = get_val("input_garantia")
+        venta_vivienda = get_val("input_venta_vivienda")
+        costo_mejoras = get_val("input_mejoras")
+        meses_interes = get_val("cant_mes")
+        
+        c_abogado = get_val("costo_abogado")
+        c_notaria = get_val("costo_notaria")
+        c_cbr = get_val("costo_cbr")
+        c_alzamientos = get_val("costo_alzamientos")
+        c_judiciales = get_val("costo_judiciales")
+        c_legal_venta = get_val("costo_legal_venta")
+        
+        suma_ofertas = postura_min + oferta_max
+        honorarios_busqueda = suma_ofertas * 0.02
+        comision_venta = venta_vivienda * 0.02
+        iva_venta = (venta_vivienda / 1.19) * 0.19
+        
+        gastos_fijos_compra = c_abogado + c_notaria + c_cbr + c_alzamientos + c_judiciales
+        
+        base_calculo_interes = (honorarios_busqueda + 
+                                gastos_fijos_compra + 
+                                garantia + 
+                                postura_min + 
+                                oferta_max + 
+                                costo_mejoras + 
+                                comision_venta + 
+                                c_legal_venta + 
+                                iva_venta)
+
+        interes_mensual = base_calculo_interes * 0.0007
+        interes_total = interes_mensual * meses_interes
+        
+        subtotal_gasto = base_calculo_interes + interes_total
+        total_ingresos = venta_vivienda + garantia
+        saldo_favor = total_ingresos - subtotal_gasto
+        impuesto = saldo_favor * 0.27 if saldo_favor > 0 else 0
+        saldo_final = saldo_favor - impuesto
+
+        nombre = document.getElementById("input_nombre").value
+        
+        # Info extra
+        str_f_remate = document.getElementById("input_fecha_remate").value or "No indicada"
+        str_f_rescate = document.getElementById("input_fecha_rescate").value or "No indicada"
+        str_fuente = document.getElementById("input_fuente").value or "No indicada"
+        
+        img_element = document.getElementById("preview-img")
+        notas_raw = document.getElementById("input_detalles").value
+        notas_final = notas_raw.strip() if notas_raw.strip() else "NO NOTA"
+
+        doc = window.jspdf.jsPDF.new()
+        
+        doc.setFont("helvetica", "bold")
+        doc.setFontSize(20)
+        doc.text("FICHA ECONOMICA DE REMATE", 20, 25)
+        
+        if img_element.src and "data:image" in img_element.src:
+            try:
+                orig_w = img_element.naturalWidth
+                orig_h = img_element.naturalHeight
+                max_w = 50; max_h = 50
+                ratio = orig_w / orig_h
+                if ratio > 1: final_w = max_w; final_h = max_w / ratio
+                else: final_h = max_h; final_w = max_h * ratio
+                doc.addImage(img_element.src, "JPEG", 140, 10, final_w, final_h)
+            except: pass 
+
+        doc.setFontSize(12)
+        doc.text(f"Oportunidad: {nombre}", 20, 40)
+        
+        doc.setFontSize(10)
+        doc.text(f"Fecha Remate: {str_f_remate} | Fecha Rescate: {str_f_rescate}", 20, 48)
+        doc.text(f"Fuente: {str_fuente}", 20, 54)
+        
+        doc.setFontSize(12)
+        doc.text(f"Ubicación: {document.getElementById('select_comuna').value}, {document.getElementById('select_region').value}", 20, 64)
+        doc.text(f"Dirección: {document.getElementById('input_direccion').value}", 20, 72)
+        
+        y_pos = 85
+        if notas_final == "NO NOTA":
+            doc.setTextColor(220, 53, 69); doc.text(f"Estado/Notas: {notas_final}", 20, y_pos); doc.setTextColor(0, 0, 0)
+        else:
+            doc.setFont("helvetica", "normal"); doc.setFontSize(10)
+            split_notas = doc.splitTextToSize(f"Notas: {notas_final}", 170)
+            doc.text(split_notas, 20, y_pos)
+            y_pos += (len(split_notas) * 5) 
+
+        doc.line(20, y_pos + 5, 190, y_pos + 5)
+        y = y_pos + 20
+        
+        # --- DETALLE TIPO BOLETA ---
+        doc.setFontSize(14); doc.setFont("helvetica", "bold")
+        doc.text("Detalle Financiero", 20, y); y += 10
+        doc.setFontSize(10); doc.setFont("helvetica", "normal")
+        
+        doc.text("1. INVERSION INICIAL", 20, y); y += 5
+        doc.text(f"   - Postura + Oferta + Garantia: {format_money(postura_min + oferta_max + garantia)}", 20, y); y+=8
+        
+        doc.text("2. GASTOS OPERACIONALES", 20, y); y += 5
+        doc.text(f"   - Honorarios y Legal: {format_money(honorarios_busqueda + gastos_fijos_compra)}", 20, y); y+=8
+        
+        doc.text("3. COSTOS FINANCIEROS", 20, y); y += 5
+        doc.text(f"   - Interes Mensual (0.07%): {format_money(interes_mensual)}", 20, y); y+=5
+        doc.text(f"   - Total Intereses ({meses_interes} meses): {format_money(interes_total)}", 20, y); y+=8
+        
+        doc.text("4. HABILITACION Y VENTA", 20, y); y += 5
+        doc.text(f"   - Mejoras + Comision + Legal: {format_money(costo_mejoras + comision_venta + c_legal_venta)}", 20, y); y+=5
+        doc.text(f"   - IVA Debito: {format_money(iva_venta)}", 20, y); y+=10
+        
+        doc.line(20, y, 100, y); y+=5
+        doc.setFont("helvetica", "bold")
+        doc.text(f"TOTAL EGRESOS: {format_money(subtotal_gasto)}", 20, y); y+=10
+        doc.text(f"TOTAL INGRESOS: {format_money(total_ingresos)}", 20, y); y+=15
+
+        doc.setFillColor(240, 240, 240); doc.rect(15, y-5, 180, 40, "F")
+        doc.setFontSize(12)
+        doc.text(f"Utilidad Bruta: {format_money(saldo_favor)}", 20, y+5)
+        doc.text(f"Impuesto (27%): - {format_money(impuesto)}", 20, y+15)
+        doc.setFontSize(16); doc.setTextColor(0, 100, 0)
+        doc.text(f"UTILIDAD NETA FINAL: {format_money(saldo_final)}", 20, y+30)
+        
+        doc.save(f"Ficha_{nombre}.pdf")
+        document.getElementById("mensaje").innerText = "✅ PDF Generado con éxito"
+
+    iniciar_app()
+</script>
+
+<script>
+    async function consultarGemini() {
+        // 1. Recopilar datos (que Python ya calculó)
+        const nombre = document.getElementById('input_nombre').value;
+        const totalGastos = document.getElementById('res_subtotal_gastos').innerText;
+        const totalIngresos = document.getElementById('res_total_ingresos').innerText;
+        const utilidad = document.getElementById('res_saldo_final_liquido').innerText;
+        const roi = document.getElementById('res_roi').innerText;
+        const rentabilidad = document.getElementById('res_rentabilidad').innerText;
+        const notas = document.getElementById('input_detalles').value;
+
+        // 2. Crear el Prompt
+        const prompt = `
+            Actúa como un experto inversionista inmobiliario senior y asesor financiero de la constructora DosH.
+            Analiza los siguientes datos de una oportunidad de remate y dame un veredicto crítico y profesional.
+            
+            DATOS DEL NEGOCIO:
+            - Oportunidad: ${nombre}
+            - Inversión Total (Gastos + Compra): ${totalGastos}
+            - Ingresos Estimados (Venta): ${totalIngresos}
+            - Utilidad Neta Final: ${utilidad}
+            - ROI (Retorno s/ Inversión): ${roi}
+            - Rentabilidad s/ Venta: ${rentabilidad}
+            - Notas adicionales del terreno/propiedad: "${notas}"
+
+            TU TAREA:
+            1. Evalúa si el ROI y la Rentabilidad son atractivos.
+            2. Identifica posibles riesgos.
+            3. Da un veredicto final: ¿Aprobarías esta inversión?
+            4. Se breve, directo y usa formato con viñetas.
+        `;
+
+        // 3. UI Loading
+        document.getElementById('loading_ai').style.display = 'block';
+        document.getElementById('resultado_ai').style.display = 'none';
+
+        try {
+            // Llamamos a TU propia API en Vercel
+            const response = await fetch('/api/analizar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: prompt })
+            });
+
+            const data = await response.json();
+            
+            if (data.result) {
+                const resultDiv = document.getElementById('resultado_ai');
+                
+                // Formatear
+                resultDiv.innerHTML = data.result
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+                
+                resultDiv.style.display = 'block';
+                resultDiv.style.borderLeft = "5px solid #9CBF28";
+            } else {
+                alert("Error: " + (data.error || "Error desconocido"));
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert("Error de conexión con el servidor. Asegúrate de que los archivos de Vercel (api/analizar.js) están subidos.");
+        } finally {
+            document.getElementById('loading_ai').style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>
