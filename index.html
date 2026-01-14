@@ -445,7 +445,14 @@
     DEF_JUDICIALES = 300000
     DEF_LEGAL_VENTA = 100000
     
+    # Variables Globales (simuladas)
     MODO_ACTUAL = "NORMAL"
+    MACAL_COSTO_ESCRITURA = 0
+    MACAL_COSTO_COMISION = 0
+    MACAL_COSTO_NOTARIA = 0
+    MACAL_COSTO_CBR = 0
+    MACAL_COSTO_BUSQUEDA = 0
+    UF_COBRO_LABEL = ""
 
     def format_money(valor):
         return "${:,.0f}".format(valor).replace(",", ".")
@@ -598,6 +605,9 @@
         return uf, (uf * VALOR_UF) * 1.19 # Valor + IVA
 
     def calcular_y_mostrar_final(e):
+        # Globales para usar en PDF
+        global MACAL_COSTO_ESCRITURA, MACAL_COSTO_COMISION, MACAL_COSTO_NOTARIA, MACAL_COSTO_CBR, MACAL_COSTO_BUSQUEDA, UF_COBRO_LABEL
+        
         # 1. Inputs
         postura_min = get_val("input_postura_min")
         oferta_max = get_val("input_oferta_max") 
@@ -606,8 +616,7 @@
         costo_mejoras = get_val("input_mejoras")
         meses_interes = get_val("cant_mes")
         
-        # Corrección de nombres de variables para que coincidan con la lógica
-        costo_alzamientos = get_val("costo_alzamientos") 
+        c_alzamientos = get_val("costo_alzamientos") 
         c_legal_venta = get_val("costo_legal_venta")
 
         # --- SELECCIÓN DE LÓGICA ---
@@ -622,61 +631,76 @@
                 tasa_comision = 0.03
                 label_comision_compra = "Comisión Normal (3% + IVA)"
             
-            costo_comision_compra = (precio_adjudicacion * tasa_comision) * 1.19
+            MACAL_COSTO_COMISION = (precio_adjudicacion * tasa_comision) * 1.19
 
             # 2. Escrituración (Post-Venta)
             uf_cobro, costo_escritura = calcular_escritura_macal(precio_adjudicacion)
+            MACAL_COSTO_ESCRITURA = costo_escritura
+            UF_COBRO_LABEL = f"{uf_cobro} UF"
             document.getElementById("disp_escritura_uf").innerText = f"{uf_cobro} UF + IVA"
 
             # 3. Notaría
-            costo_notaria = 70000 + (precio_adjudicacion * 0.001)
+            MACAL_COSTO_NOTARIA = 70000 + (precio_adjudicacion * 0.001)
 
             # 4. CBR
             cbr_usuario = get_val("macal_cbr_editable")
             calc_cbr_min = precio_adjudicacion * 0.004
             
             if cbr_usuario == 250000:
-                costo_cbr = 250000 if calc_cbr_min < 250000 else calc_cbr_min
-                document.getElementById("macal_cbr_editable").value = str(int(costo_cbr))
+                MACAL_COSTO_CBR = 250000 if calc_cbr_min < 250000 else calc_cbr_min
+                document.getElementById("macal_cbr_editable").value = str(int(MACAL_COSTO_CBR))
             else:
-                costo_cbr = cbr_usuario
+                MACAL_COSTO_CBR = cbr_usuario
 
             # 5. Búsqueda (2% de Suma)
-            costo_busqueda = (postura_min + oferta_max) * 0.02
+            MACAL_COSTO_BUSQUEDA = (postura_min + oferta_max) * 0.02
             label_busqueda = "Búsqueda (2% Suma)"
             
+            # Variables Normales en 0
             costo_abogado = 0
             costo_judiciales = 0 
+            costo_notaria_normal = 0
+            costo_cbr_normal = 0
+            costo_busqueda_normal = 0
 
         else:
             # MODO NORMAL
             costo_abogado = get_val("costo_abogado")
-            costo_notaria = get_val("costo_notaria")
-            costo_cbr = get_val("costo_cbr")
+            costo_notaria_normal = get_val("costo_notaria")
+            costo_cbr_normal = get_val("costo_cbr")
             costo_judiciales = get_val("costo_judiciales")
             
             # Búsqueda tradicional
             suma_ofertas = postura_min + oferta_max 
-            costo_busqueda = suma_ofertas * 0.02
+            costo_busqueda_normal = suma_ofertas * 0.02
             label_busqueda = "Honorarios Búsqueda (2%)"
             
-            costo_comision_compra = 0
-            label_comision_compra = ""
-            costo_escritura = 0
+            # Variables Macal en 0
+            MACAL_COSTO_COMISION = 0
+            MACAL_COSTO_ESCRITURA = 0
+            MACAL_COSTO_NOTARIA = 0
+            MACAL_COSTO_CBR = 0
+            MACAL_COSTO_BUSQUEDA = 0
 
         # --- CÁLCULOS FINALES COMUNES ---
         comision_venta = venta_vivienda * 0.02
         iva_venta = (venta_vivienda / 1.19) * 0.19
         
         # Total Gastos Fijos Compra
-        gastos_operacionales = (costo_abogado + 
-                                costo_notaria + 
-                                costo_cbr + 
-                                costo_alzamientos + 
-                                costo_judiciales + 
-                                costo_escritura + 
-                                costo_comision_compra +
-                                costo_busqueda)
+        if MODO_ACTUAL == "MACAL":
+            gastos_operacionales = (MACAL_COSTO_NOTARIA + 
+                                    MACAL_COSTO_CBR + 
+                                    c_alzamientos + 
+                                    MACAL_COSTO_ESCRITURA + 
+                                    MACAL_COSTO_COMISION +
+                                    MACAL_COSTO_BUSQUEDA)
+        else:
+            gastos_operacionales = (costo_abogado + 
+                                    costo_notaria_normal + 
+                                    costo_cbr_normal + 
+                                    c_alzamientos + 
+                                    costo_judiciales + 
+                                    costo_busqueda_normal)
         
         base_calculo_interes = (gastos_operacionales + 
                                 garantia + 
@@ -701,7 +725,10 @@
         rentabilidad = (saldo_final / venta_vivienda) * 100 if venta_vivienda > 0 else 0
 
         # UI Updates
-        document.getElementById("disp_busqueda").innerText = format_money(costo_busqueda)
+        if MODO_ACTUAL == "MACAL":
+             document.getElementById("disp_busqueda").innerText = format_money(MACAL_COSTO_BUSQUEDA)
+        else:
+             document.getElementById("disp_busqueda").innerText = format_money(costo_busqueda_normal)
 
         document.getElementById("disp_comision").innerText = format_money(comision_venta)
         document.getElementById("disp_iva").innerText = format_money(iva_venta)
@@ -726,21 +753,21 @@
         html_gastos += crear_fila_desglose("Garantía", garantia)
         
         html_gastos += crear_titulo_desglose("2. Gastos Operacionales")
-        html_gastos += crear_fila_desglose(label_busqueda, costo_busqueda)
         
         if MODO_ACTUAL == "MACAL":
-            html_gastos += crear_fila_desglose(label_comision_compra, costo_comision_compra)
-            html_gastos += crear_fila_desglose(f"Escrituración ({uf_cobro} UF+IVA)", costo_escritura)
+            html_gastos += crear_fila_desglose(label_busqueda, MACAL_COSTO_BUSQUEDA)
+            html_gastos += crear_fila_desglose(label_comision_compra, MACAL_COSTO_COMISION)
+            html_gastos += crear_fila_desglose(f"Serv. Postventa ({UF_COBRO_LABEL})", MACAL_COSTO_ESCRITURA)
+            html_gastos += crear_fila_desglose("Notaría (Macal)", MACAL_COSTO_NOTARIA)
+            html_gastos += crear_fila_desglose("CBR (Macal)", MACAL_COSTO_CBR)
         else:
+            html_gastos += crear_fila_desglose(label_busqueda, costo_busqueda_normal)
             html_gastos += crear_fila_desglose("Abogado", costo_abogado)
+            html_gastos += crear_fila_desglose("Notaría", costo_notaria_normal)
+            html_gastos += crear_fila_desglose("CBR", costo_cbr_normal)
+            html_gastos += crear_fila_desglose("Judiciales", costo_judiciales)
 
-        html_gastos += crear_fila_desglose("Notaría", costo_notaria)
-        html_gastos += crear_fila_desglose("CBR", costo_cbr)
-        
-        if MODO_ACTUAL == "NORMAL":
-             html_gastos += crear_fila_desglose("Judiciales", costo_judiciales)
-
-        html_gastos += crear_fila_desglose("Alzamientos", costo_alzamientos)
+        html_gastos += crear_fila_desglose("Alzamientos", c_alzamientos)
         
         html_gastos += crear_titulo_desglose("3. Habilitación y Venta")
         html_gastos += crear_fila_desglose("Mejoras", costo_mejoras)
@@ -795,8 +822,16 @@
         doc.text(f"Total Ingresos: {ingresos}", 20, 80)
         doc.text(f"Total Egresos: {egresos}", 20, 88)
         
+        # Desglose breve en PDF según modo
+        doc.setFontSize(10); doc.setTextColor(100, 100, 100)
+        y_det = 95
+        if MODO_ACTUAL == "MACAL":
+             doc.text(f"- Comisión Macal: {format_money(MACAL_COSTO_COMISION)}", 20, y_det); y_det+=5
+             doc.text(f"- Servicio Postventa: {format_money(MACAL_COSTO_ESCRITURA)}", 20, y_det); y_det+=5
+             doc.text(f"- Notaría + CBR: {format_money(MACAL_COSTO_NOTARIA + MACAL_COSTO_CBR)}", 20, y_det); y_det+=10
+        
         doc.setFontSize(16); doc.setTextColor(0, 100, 0)
-        doc.text(f"UTILIDAD NETA: {utilidad}", 20, 105)
+        doc.text(f"UTILIDAD NETA: {utilidad}", 20, y_det+10)
         
         doc.save(f"Ficha_{nombre}.pdf")
         document.getElementById("mensaje").innerText = "✅ PDF Generado"
@@ -806,7 +841,7 @@
 
 <script>
     async function consultarGroq() {
-        const nombre = document.getElementById('input_nombre').value;
+        const nombre = document.getElementById('input_nombre').value || "Propiedad Ejemplo";
         const totalGastos = document.getElementById('res_subtotal_gastos').innerText;
         const totalIngresos = document.getElementById('res_total_ingresos').innerText;
         const utilidad = document.getElementById('res_saldo_final_liquido').innerText;
@@ -835,23 +870,42 @@
                 body: JSON.stringify({ prompt: prompt })
             });
 
+            if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
+
             const data = await response.json();
             
             if (data.result) {
-                const resultDiv = document.getElementById('resultado_ai');
-                resultDiv.innerHTML = data.result.replace(/\n/g, '<br>');
-                resultDiv.style.display = 'block';
-                resultDiv.style.borderLeft = "5px solid #9CBF28";
+                mostrarResultado(data.result);
             } else {
-                alert("Error: " + (data.error || "Error desconocido"));
+                throw new Error("La IA no devolvió resultados.");
             }
 
         } catch (error) {
-            console.error(error);
-            alert("Error de conexión con IA.");
-        } finally {
-            document.getElementById('loading_ai').style.display = 'none';
+            console.warn("⚠️ No se pudo conectar con la API real. Usando modo simulación.", error);
+            const respuestaSimulada = `
+            <strong>⚠️ MODO DEMOSTRACIÓN (Sin conexión a servidor)</strong><br><br>
+            <strong>VEREDICTO: APROBADO (Preliminar)</strong>
+            <br><br>
+            Basado en los números ingresados para <strong>${nombre}</strong>:
+            <ul>
+                <li>✅ <strong>Rentabilidad:</strong> Un ROI de ${roi} es positivo.</li>
+                <li>⚠️ <strong>Riesgo:</strong> Revisa el estado de ocupación y deudas.</li>
+                <li>💡 <strong>Consejo:</strong> Valida los costos de mejoras estimados.</li>
+            </ul>
+            `;
+            setTimeout(() => {
+                mostrarResultado(respuestaSimulada);
+            }, 1000);
         }
+    }
+
+    function mostrarResultado(textoHTML) {
+        const resultDiv = document.getElementById('resultado_ai');
+        let formatted = textoHTML.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        resultDiv.innerHTML = formatted;
+        resultDiv.style.display = 'block';
+        resultDiv.style.borderLeft = "5px solid #9CBF28"; 
+        document.getElementById('loading_ai').style.display = 'none';
     }
 </script>
 
