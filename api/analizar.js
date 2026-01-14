@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
           content: prompt,
         },
       ],
-      model: "llama3-8b-8192",
+      model: "llama-3.3-70b-versatile",
     });
 
     const text = chatCompletion.choices[0]?.message?.content || "";
@@ -38,3 +38,4 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+
