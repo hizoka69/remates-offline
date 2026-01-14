@@ -72,6 +72,16 @@
         .interest-highlight { background-color: #eef2f7; border-left: 4px solid var(--dosh-blue); padding: 10px; margin-bottom: 10px; border-radius: 4px; }
         .interest-highlight .result-row { border-bottom: 1px dashed #ccc; padding: 5px 0; }
         .interest-highlight .result-row:last-child { border-bottom: none; }
+
+        /* --- NUEVOS ESTILOS PANTALLA DE SELECCIÓN --- */
+        .mode-selection-container { display: flex; flex-direction: column; gap: 20px; margin-top: 30px; }
+        .mode-card { background: white; border: 2px solid #e1e5eb; border-radius: 15px; padding: 25px; text-align: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
+        .mode-card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0, 59, 115, 0.15); border-color: var(--dosh-blue); }
+        .mode-card h3 { color: var(--dosh-blue); margin: 15px 0 10px 0; font-size: 1.3rem; }
+        .mode-card p { color: #666; font-size: 0.9rem; margin: 0; line-height: 1.4; }
+        .icon-mode { font-size: 3.5rem; display: block; margin-bottom: 10px; }
+        .badge-new { position: absolute; top: 15px; right: 15px; background: var(--dosh-green); color: white; font-size: 0.7rem; font-weight: bold; padding: 4px 8px; border-radius: 10px; text-transform: uppercase; }
+
     </style>
     
     <script>
@@ -92,10 +102,28 @@
 <body>
 
 <div class="container">
-    <h1>MAXI AMARICONAO!</h1>
-    <p class="subtitle">Evaluación Económica de Remates</p>
+    <h1>Gestor De Remates</h1>
+    <p class="subtitle" id="main_subtitle">Selecciona el tipo de evaluación</p>
 
-    <div id="slide1" class="slide active">
+    <div id="slide_selection" class="slide active">
+        <div class="mode-selection-container">
+            
+            <div class="mode-card" py-click="iniciar_metodo_normal">
+                <span class="icon-mode">🏠</span>
+                <h3>Método Normal</h3>
+                <p>Procedimiento estándar de remates judiciales. Cálculo tradicional de costos fijos, variables y proyección.</p>
+            </div>
+
+            <div class="mode-card" onclick="alert('hola ariadna')">
+                <span class="badge-new">!</span>
+                <span class="icon-mode">⚖️</span>
+                <h3>Método Macal</h3>
+                <p>Procedimiento especializado para subastas Macal. Cálculo específico de garantías y comisiones del martillero.</p>
+            </div>
+
+        </div>
+    </div>
+    <div id="slide1" class="slide">
         <h2>1. Ficha Técnica</h2>
         
         <label>Imagen de la Propiedad (Opcional)</label>
@@ -152,7 +180,7 @@
         <textarea id="input_detalles" rows="3"></textarea>
 
         <div class="nav-buttons">
-            <button class="btn-back" style="visibility: hidden;">Atrás</button>
+            <button class="btn-back" py-click="ir_menu_principal">← Menú</button>
             <button class="btn-next" py-click="ir_slide_2">Siguiente ➝</button>
         </div>
     </div>
@@ -321,14 +349,14 @@
         </div>
 
         <button class="btn-pdf" py-click="generar_pdf_completo">📥 Descargar Ficha PDF Detallada</button>
-        <button class="btn-new" py-click="nueva_operacion">🔄 Nueva Operación</button>
+        <button class="btn-new" py-click="nueva_operacion">🔄 Nueva Operación / Menú</button>
         <div id="mensaje"></div>
 
         <div class="nav-buttons">
             <button class="btn-back" py-click="ir_slide_3">← Editar</button>
         </div>
     </div>
-    <div style="margin-top: 30px; border-top: 2px dashed #ccc; padding-top: 20px;">
+    <div id="sec_ia" style="margin-top: 30px; border-top: 2px dashed #ccc; padding-top: 20px; display: none;">
         <h2>🤖 Asesoría con IA (Groq)</h2>
         <button onclick="consultarGroq()" 
                 style="background: linear-gradient(45deg, #4285f4, #9b72cb); color: white; width: 100%;">
@@ -396,9 +424,25 @@
             opt.value = c
             sel_com.add(opt)
 
-    # --- NAVEGACIÓN ---
+    # --- NAVEGACIÓN ACTUALIZADA ---
     def cambiar_slide(id_mostrar):
-        ids = ["slide1", "slide2", "slide3", "slide_final"]
+        # Agregamos el nuevo slide_selection a la lista
+        ids = ["slide_selection", "slide1", "slide2", "slide3", "slide_final"]
+        
+        # Actualizar subtítulo y visibilidad de IA según la pantalla
+        subt = document.getElementById("main_subtitle")
+        sec_ia = document.getElementById("sec_ia")
+        
+        if id_mostrar == "slide_selection":
+             subt.innerText = "Selecciona el tipo de evaluación"
+             sec_ia.style.display = "none"
+        elif id_mostrar == "slide_final":
+             subt.innerText = "Resumen de Resultados"
+             sec_ia.style.display = "block"
+        else:
+             subt.innerText = "Evaluación Económica de Remates"
+             sec_ia.style.display = "none"
+
         for i in ids:
             el = document.getElementById(i)
             if i == id_mostrar:
@@ -407,11 +451,20 @@
                 el.classList.remove("active")
         window.scrollTo(0, 0)
 
+    # --- NUEVAS FUNCIONES DE MENÚ ---
+    def ir_menu_principal(e):
+        cambiar_slide("slide_selection")
+    
+    def iniciar_metodo_normal(e):
+        # Aquí iremos al slide 1 del método normal
+        cambiar_slide("slide1")
+        
+    # Funciones de navegación existentes
     def ir_slide_1(e): cambiar_slide("slide1")
     def ir_slide_2(e): cambiar_slide("slide2")
     def ir_slide_3(e): cambiar_slide("slide3")
 
-    # --- RESETEO ---
+    # --- RESETEO (MODIFICADO) ---
     def nueva_operacion(e):
         ids_text = ["input_nombre", "input_direccion", "input_superficie", "input_detalles", "input_fuente"]
         for i in ids_text: document.getElementById(i).value = ""
@@ -436,7 +489,7 @@
         document.getElementById("select_region").selectedIndex = 0
         document.getElementById("select_comuna").innerHTML = "<option>...</option>"
 
-        spans_calc = ["disp_interes", "disp_busqueda", "disp_comision", "disp_iva", "res_interes_mensual", "res_interes_total", "res_roi", "res_rentabilidad"]
+        spans_calc = ["disp_busqueda", "disp_comision", "disp_iva", "res_interes_mensual", "res_interes_total", "res_roi", "res_rentabilidad"]
         for s in spans_calc: 
             elem = document.getElementById(s)
             if elem: elem.innerText = "--"
@@ -447,6 +500,8 @@
         document.getElementById("mensaje").innerText = ""
         document.getElementById("breakdown_gastos").innerHTML = ""
         document.getElementById("breakdown_ingresos").innerHTML = ""
+        document.getElementById("resultado_ai").innerHTML = ""
+        document.getElementById("resultado_ai").style.display = "none"
         
         # Limpiar imagen
         document.getElementById("input_imagen").value = ""
@@ -454,7 +509,8 @@
         document.getElementById("preview-container").style.display = "none"
         document.querySelector(".btn-file").innerText = "📷 Toca para subir foto"
 
-        cambiar_slide("slide1")
+        # AL RESETEAR, VOLVEMOS AL MENÚ PRINCIPAL
+        cambiar_slide("slide_selection")
 
     # --- CÁLCULOS ---
     def get_val(id_elem):
@@ -776,4 +832,3 @@
 
 </body>
 </html>
-
