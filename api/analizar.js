@@ -1,6 +1,6 @@
 // api/analizar.js
 export default async function handler(req, res) {
-  // 1. Configuración CORS (Igual que antes)
+  // 1. Configuración CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -18,9 +18,9 @@ export default async function handler(req, res) {
     const { prompt } = req.body;
     if (!prompt) throw new Error("El prompt está vacío");
 
-    // 2. CONEXIÓN DIRECTA (Sin librería)
-    // Usamos el endpoint REST oficial de Google
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    // 2. CAMBIO CLAVE: Usamos 'gemini-pro' (Estándar) en lugar de 'flash'
+    // Esto asegura compatibilidad total.
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -38,11 +38,18 @@ export default async function handler(req, res) {
 
     // 3. Manejo de Errores de Google
     if (!response.ok) {
-      console.error("Error de Google:", data);
-      throw new Error(data.error?.message || "Error desconocido de Google API");
+      console.error("Error de Google:", JSON.stringify(data, null, 2));
+      
+      // Si falla incluso con gemini-pro, el problema es 100% la API Key
+      throw new Error(data.error?.message || "Error al conectar con Google");
     }
 
     // 4. Extraer el texto
+    // (A veces gemini-pro devuelve estructura ligeramente distinta si hay bloqueo de seguridad, pero esto debería funcionar)
+    if (!data.candidates || data.candidates.length === 0) {
+        throw new Error("Google no devolvió texto (Posible bloqueo de seguridad)");
+    }
+
     const text = data.candidates[0].content.parts[0].text;
     
     return res.status(200).json({ result: text });
