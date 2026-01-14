@@ -6,6 +6,8 @@
     
     <title>Gestor de Remates</title>
     
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
     <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -13,65 +15,336 @@
     <style>
         /* --- VARIABLES DE MARCA DOSH --- */
         :root {
-            --dosh-blue: #003B73;       
+            --dosh-blue: #003B73;        
+            --dosh-blue-light: #e6f0fa;
             --dosh-green: #9CBF28;      
             --dosh-green-dark: #7da118; 
-            --dosh-bg: #848586;         
-            --text-main: #333333;
-            --text-light: #777777;
+            --bg-app: #f4f6f9;          
+            --surface: #ffffff;
+            --text-main: #1f2937;
+            --text-light: #6b7280;
+            --border-color: #e5e7eb;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--dosh-bg); padding: 15px; color: var(--text-main); margin: 0; -webkit-tap-highlight-color: transparent; }
-        .container { max-width: 800px; margin: 0 auto; background: rgb(240, 239, 239); padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0, 59, 115, 0.08); border-top: 5px solid var(--dosh-green); }
-        h1 { color: var(--dosh-blue); font-size: 1.6rem; margin-top: 0; text-align: center; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase; }
-        .subtitle { text-align: center; color: var(--text-light); font-size: 0.9rem; margin-bottom: 25px; font-weight: 500; }
-        .slide { display: none; animation: slideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-        .slide.active { display: block; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        h2 { font-size: 1.1rem; color: var(--dosh-blue); border-bottom: 2px solid var(--dosh-green); padding-bottom: 8px; margin-top: 5px; margin-bottom: 20px; display: inline-block; width: 100%; }
-        .row { display: flex; gap: 15px; margin-bottom: 15px; }
+        body { 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg-app); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 0; /* Full width en mobile */
+            -webkit-tap-highlight-color: transparent; 
+            line-height: 1.5;
+        }
+
+        /* Contenedor Principal estilo Tarjeta */
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: var(--surface); 
+            min-height: 100vh;
+            padding: 20px 24px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* Ajuste para tablets y escritorio */
+        @media (min-width: 768px) {
+            body { padding: 40px 20px; }
+            .container { 
+                border-radius: 24px; 
+                min-height: auto; 
+                box-shadow: 0 10px 25px rgba(0, 59, 115, 0.08); 
+            }
+        }
+
+        /* Títulos */
+        h1 { 
+            color: var(--dosh-blue); 
+            font-size: 1.5rem; 
+            margin: 10px 0 5px 0; 
+            text-align: center; 
+            font-weight: 800; 
+            letter-spacing: -0.5px; 
+            text-transform: uppercase; 
+        }
+
+        .subtitle { 
+            text-align: center; 
+            color: var(--text-light); 
+            font-size: 0.9rem; 
+            margin-bottom: 30px; 
+            font-weight: 500; 
+        }
+
+        h2 { 
+            font-size: 1.1rem; 
+            color: var(--dosh-blue); 
+            font-weight: 700;
+            border-left: 4px solid var(--dosh-green); 
+            padding-left: 12px; 
+            margin: 25px 0 20px 0; 
+        }
+
+        /* Animaciones */
+        .slide { display: none; opacity: 0; transform: translateY(10px); transition: all 0.3s ease-out; }
+        .slide.active { display: block; opacity: 1; transform: translateY(0); }
+
+        /* Grillas y Layouts */
+        .row { display: flex; gap: 16px; margin-bottom: 16px; }
         .col { flex: 1; }
-        @media (max-width: 600px) { .row { flex-direction: column; gap: 15px; } .container { padding: 20px; min-height: 90vh; } h2 { font-size: 1.2rem; } .slide { padding-bottom: 20px; } }
-        label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--dosh-blue); }
-        .small-note { font-size: 0.75rem; color: #999; display: block; margin-bottom: 4px; }
-        input, select, textarea { width: 100%; padding: 14px; border: 2px solid #e1e5eb; border-radius: 10px; box-sizing: border-box; font-size: 16px; background-color: #fafafa; color: #333; transition: all 0.2s; }
-        input:focus, select:focus, textarea:focus { border-color: var(--dosh-blue); outline: none; background-color: #fff; box-shadow: 0 0 0 4px rgba(0, 59, 115, 0.1); }
-        .input-editable { background-color: #fff; border: 1px solid #ccc; padding: 8px; font-size: 0.95rem; text-align: right; width: 140px; }
-        .input-editable:focus { border-color: var(--dosh-green); background-color: #fefffa; }
-        input:disabled { background-color: #f0f2f5; color: #888; border-color: #eee; }
-        .file-upload-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; margin-bottom: 15px; }
-        .btn-file { border: 2px dashed var(--dosh-blue); color: var(--dosh-blue); background-color: #f8f9fa; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; text-align: center; display: block; box-sizing: border-box; }
-        .file-upload-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; width: 100%; }
-        #preview-container { text-align: center; margin-bottom: 15px; display: none; }
-        #preview-img { max-width: 100%; max-height: 200px; border-radius: 8px; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .nav-buttons { display: flex; gap: 12px; margin-top: 30px; }
-        button { padding: 15px; border: none; border-radius: 10px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: transform 0.1s, opacity 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        button:active { transform: scale(0.97); }
-        .btn-next { background-color: var(--dosh-blue); color: white; flex: 1; }
-        .btn-back { background-color: #e2e6ea; color: var(--text-main); flex: 0.4; }
-        .btn-pdf { background-color: var(--dosh-green); color: white; width: 100%; margin-top: 15px; font-size: 1.1rem; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .btn-new { background-color: #5d7a96; color: white; width: 100%; margin-top: 15px; }
-        .result-box { background: #fff; border: 1px solid #e1e5eb; border-radius: 12px; padding: 15px; margin-top: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-        .result-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f2f5; align-items: center; }
-        .result-row span:first-child { color: #555; font-size: 0.9rem; flex:1; }
-        .result-row span:last-child { font-weight: 600; font-family: 'Segoe UI', monospace; font-size: 1rem; color: #333; }
-        .green-text { color: var(--dosh-green-dark); font-weight: bold !important; }
-        .red-text { color: #d63384; }
-        .brand-text { color: var(--dosh-blue); font-weight: bold; }
-        .result-row.total-final { background-color: #f4f9e6; border: 1px solid var(--dosh-green); border-radius: 8px; padding: 15px; margin-top: 15px; color: var(--dosh-blue); }
-        .result-row.total-final span:last-child { color: var(--dosh-blue); font-size: 1.5rem; font-weight: 800; }
-        details { margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
-        summary { padding: 12px; background-color: #f8f9fa; color: var(--dosh-blue); font-weight: 600; font-size: 0.85rem; text-align: right; list-style: none; outline: none; cursor: pointer; }
-        summary:after { content: " ▼ Ver Detalle"; font-size: 0.8rem; opacity: 0.8; }
-        details[open] summary:after { content: " ▲ Ocultar"; }
+        
+        @media (max-width: 600px) { 
+            .row { flex-direction: column; gap: 16px; } 
+        }
+
+        /* Formularios */
+        label { 
+            font-weight: 600; 
+            display: block; 
+            margin-bottom: 6px; 
+            font-size: 0.85rem; 
+            color: var(--dosh-blue); 
+        }
+
+        .small-note { font-size: 0.75rem; color: #9ca3af; display: block; margin-bottom: 6px; margin-top: -4px;}
+
+        input, select, textarea { 
+            width: 100%; 
+            padding: 14px 16px; /* Touch friendly */
+            border: 1px solid var(--border-color); 
+            border-radius: var(--radius-md); 
+            font-size: 16px; /* Evita zoom en iOS */
+            background-color: #fafafa; 
+            color: var(--text-main); 
+            transition: all 0.2s ease; 
+            box-sizing: border-box;
+            font-family: inherit;
+            appearance: none; /* Nativo UI reset */
+        }
+
+        input:focus, select:focus, textarea:focus { 
+            border-color: var(--dosh-blue); 
+            outline: none; 
+            background-color: #fff; 
+            box-shadow: 0 0 0 3px rgba(0, 59, 115, 0.1); 
+        }
+
+        /* Input editable especial (moneda) */
+        .input-editable { 
+            background-color: #fff; 
+            border: 1px solid #d1d5db; 
+            padding: 10px; 
+            font-size: 0.95rem; 
+            text-align: right; 
+            width: 140px; 
+            font-weight: 600;
+        }
+
+        /* Carga de Archivos */
+        .file-upload-wrapper { 
+            position: relative; 
+            overflow: hidden; 
+            display: block; 
+            width: 100%; 
+            margin-bottom: 20px; 
+        }
+
+        .btn-file { 
+            border: 2px dashed #cbd5e1; 
+            color: var(--dosh-blue); 
+            background-color: var(--dosh-blue-light); 
+            padding: 20px; 
+            border-radius: var(--radius-lg); 
+            font-weight: 600; 
+            text-align: center; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: background 0.2s;
+        }
+        
+        .btn-file:active { background-color: #dbeafe; }
+
+        .file-upload-wrapper input[type=file] { 
+            font-size: 100px; 
+            position: absolute; 
+            left: 0; top: 0; 
+            opacity: 0; 
+            cursor: pointer; 
+            height: 100%; width: 100%; 
+        }
+
+        #preview-container { 
+            text-align: center; 
+            margin-bottom: 20px; 
+            display: none; 
+            position: relative;
+        }
+
+        #preview-img { 
+            width: 100%; 
+            height: 200px; 
+            object-fit: cover; 
+            border-radius: var(--radius-lg); 
+            box-shadow: var(--shadow-md); 
+        }
+
+        /* Botones */
+        .nav-buttons { 
+            display: flex; 
+            gap: 12px; 
+            margin-top: 35px; 
+            padding-bottom: 20px;
+        }
+
+        button { 
+            padding: 16px; 
+            border: none; 
+            border-radius: var(--radius-md); 
+            font-weight: 600; 
+            font-size: 1rem; 
+            cursor: pointer; 
+            transition: transform 0.1s, opacity 0.2s, box-shadow 0.2s; 
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: inherit;
+        }
+
+        button:active { transform: scale(0.98); opacity: 0.9; }
+
+        .btn-next { 
+            background: linear-gradient(135deg, var(--dosh-blue) 0%, #002a52 100%);
+            color: white; 
+            flex: 1; 
+            box-shadow: 0 4px 12px rgba(0, 59, 115, 0.2);
+        }
+
+        .btn-back { 
+            background-color: #f3f4f6; 
+            color: var(--text-light); 
+            flex: 0.4; 
+        }
+
+        .btn-pdf { 
+            background: linear-gradient(135deg, var(--dosh-green) 0%, var(--dosh-green-dark) 100%);
+            color: white; 
+            width: 100%; 
+            margin-top: 20px; 
+            font-size: 1.1rem; 
+            box-shadow: 0 4px 12px rgba(156, 191, 40, 0.3);
+        }
+
+        .btn-new { 
+            background-color: #64748b; 
+            color: white; 
+            width: 100%; 
+            margin-top: 15px; 
+        }
+
+        /* Resultados y Cajas */
+        .result-box { 
+            background: #fff; 
+            border: 1px solid var(--border-color); 
+            border-radius: var(--radius-lg); 
+            padding: 20px; 
+            margin-top: 15px; 
+            box-shadow: var(--shadow-sm); 
+        }
+
+        .result-row { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 12px 0; 
+            border-bottom: 1px dashed #e5e7eb; 
+            align-items: center; 
+        }
+        
+        .result-row:last-child { border-bottom: none; }
+
+        .result-row span:first-child { color: var(--text-light); font-size: 0.9rem; flex: 1; }
+        .result-row span:last-child { font-weight: 600; font-family: 'Inter', monospace; font-size: 1.05rem; color: var(--text-main); }
+
+        .green-text { color: var(--dosh-green-dark); font-weight: 700 !important; }
+        .red-text { color: #dc2626; }
+        .brand-text { color: var(--dosh-blue); font-weight: 700; }
+
+        .result-row.total-final { 
+            background: linear-gradient(to right, #f4f9e6, #fff); 
+            border: 1px solid var(--dosh-green); 
+            border-radius: var(--radius-md); 
+            padding: 20px; 
+            margin-top: 20px; 
+            color: var(--dosh-blue); 
+            box-shadow: 0 4px 6px rgba(156, 191, 40, 0.1);
+        }
+        
+        .result-row.total-final span:last-child { 
+            color: var(--dosh-blue); 
+            font-size: 1.6rem; 
+            font-weight: 800; 
+        }
+
+        /* Detalles Desplegables */
+        details { margin-bottom: 12px; border: 1px solid #f3f4f6; border-radius: var(--radius-md); overflow: hidden; }
+        summary { padding: 14px; background-color: #f9fafb; color: var(--dosh-blue); font-weight: 600; font-size: 0.85rem; text-align: right; list-style: none; cursor: pointer; user-select: none; }
+        summary:after { content: " ▼"; font-size: 0.7rem; margin-left: 5px; }
+        details[open] summary:after { content: " ▲"; }
+
         .breakdown-list { background: #fff; padding: 15px; }
-        .breakdown-item { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 8px; color: #666; }
-        .breakdown-title { background-color: var(--dosh-blue); color: white; padding: 5px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-align: center; margin: 15px 0 10px 0; text-transform: uppercase; letter-spacing: 1px; }
+        .breakdown-item { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 10px; color: #666; }
+        
+        .breakdown-title { 
+            background-color: var(--dosh-blue-light); 
+            color: var(--dosh-blue); 
+            padding: 8px; 
+            border-radius: 6px; 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            text-align: center; 
+            margin: 15px 0 10px 0; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
         .breakdown-title:first-child { margin-top: 0; }
-        #mensaje { text-align: center; margin-top: 15px; font-weight: bold; color: var(--dosh-green-dark); min-height: 24px; }
-        .interest-highlight { background-color: #eef2f7; border-left: 4px solid var(--dosh-blue); padding: 10px; margin-bottom: 10px; border-radius: 4px; }
-        .interest-highlight .result-row { border-bottom: 1px dashed #ccc; padding: 5px 0; }
-        .interest-highlight .result-row:last-child { border-bottom: none; }
+
+        #mensaje { text-align: center; margin-top: 15px; font-weight: 600; color: var(--dosh-green-dark); min-height: 24px; }
+
+        .interest-highlight { 
+            background-color: #eff6ff; 
+            border-left: 4px solid var(--dosh-blue); 
+            padding: 15px; 
+            margin-bottom: 15px; 
+            border-radius: 4px; 
+        }
+
+        /* Estilo Botón Gemini */
+        .btn-ai {
+            background: linear-gradient(45deg, #4285f4, #8e44ad);
+            color: white;
+            width: 100%;
+            border-radius: var(--radius-md);
+            box-shadow: 0 4px 15px rgba(142, 68, 173, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-ai::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+        
+        .btn-ai:hover::before { left: 100%; }
+
     </style>
     
     <script>
@@ -82,7 +355,10 @@
                     var img = document.getElementById('preview-img');
                     img.src = e.target.result;
                     document.getElementById('preview-container').style.display = 'block';
-                    document.querySelector('.btn-file').innerText = "✅ Foto cargada";
+                    document.querySelector('.btn-file').innerHTML = "✅ Foto cargada (Toca para cambiar)";
+                    document.querySelector('.btn-file').style.background = "#dcfce7";
+                    document.querySelector('.btn-file').style.color = "#166534";
+                    document.querySelector('.btn-file').style.borderColor = "#166534";
                 }
                 reader.readAsDataURL(input.files[0]);
             }
@@ -93,14 +369,17 @@
 
 <div class="container">
     <h1>Gestor De Remates</h1>
-    <p class="subtitle">Evaluación Económica de Remates</p>
+    <p class="subtitle">Evaluación Económica de Proyectos</p>
 
     <div id="slide1" class="slide active">
         <h2>1. Ficha Técnica</h2>
         
-        <label>Imagen de la Propiedad (Opcional)</label>
+        <label>Fotografía de Referencia</label>
         <div class="file-upload-wrapper">
-            <div class="btn-file">📷 Toca para subir foto</div>
+            <div class="btn-file">
+                <span style="font-size: 1.5rem;">📷</span> 
+                <span>Subir Foto de Propiedad</span>
+            </div>
             <input type="file" id="input_imagen" accept="image/*" onchange="procesarImagen(this)">
         </div>
         <div id="preview-container">
@@ -120,10 +399,10 @@
             </div>
         </div>
 
-        <label>Nombre Oportunidad</label>
-        <input type="text" id="input_nombre" placeholder="Ej: Casa Centro">
+        <label>Nombre de la Oportunidad</label>
+        <input type="text" id="input_nombre" placeholder="Ej: Depto Centro Talca" autocomplete="off">
 
-        <div class="row">
+        <div class="row" style="margin-top: 16px;">
             <div class="col">
                 <label>Fecha Remate</label>
                 <input type="date" id="input_fecha_remate">
@@ -133,23 +412,24 @@
                 <input type="date" id="input_fecha_rescate">
             </div>
         </div>
-        <label>Fuente de Información</label>
-        <input type="text" id="input_fuente" placeholder="Ej: Diario Talca">
+        
+        <label style="margin-top: 10px;">Fuente de Información</label>
+        <input type="text" id="input_fuente" placeholder="Ej: Portal Remates / Diario">
 
-        <div class="row">
+        <div class="row" style="margin-top: 16px;">
             <div class="col">
-                <label>Dirección</label>
-                <input type="text" id="input_direccion">
+                <label>Dirección Exacta</label>
+                <input type="text" id="input_direccion" placeholder="Calle, Número, Depto">
             </div>
             <div class="col">
                 <label>Superficie (m²)</label>
                 <input type="text" inputmode="numeric" pattern="[0-9]*" id="input_superficie" 
-                       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="0">
             </div>
         </div>
 
-        <label>Notas / Estado</label>
-        <textarea id="input_detalles" rows="3"></textarea>
+        <label>Notas / Estado de Conservación</label>
+        <textarea id="input_detalles" rows="3" placeholder="Estado ocupacional, deudas, reparaciones necesarias..."></textarea>
 
         <div class="nav-buttons">
             <button class="btn-back" style="visibility: hidden;">Atrás</button>
@@ -186,7 +466,7 @@
             </div>
         </div>
 
-        <h2 style="font-size: 1rem; border:none; margin-bottom: 5px; color: var(--text-light);">Costos Fijos (Editables)</h2>
+        <h2 style="font-size: 1rem; border:none; margin-bottom: 10px; margin-top: 30px; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px;">Costos Fijos Operacionales</h2>
         <div class="result-box">
             <div class="result-row">
                 <span>⚖️ Abogado</span>
@@ -225,13 +505,13 @@
         <h2>3. Proyección Venta</h2>
         
         <label>Precio Venta Estimado ($)</label>
-        <span class="small-note">Valor mercado estimado</span>
+        <span class="small-note">Valor comercial de mercado (conservador)</span>
         <input type="number" inputmode="numeric" id="input_venta_vivienda" value="0"
-               oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+               oninput="this.value = this.value.replace(/[^0-9]/g, '')" style="font-size: 1.2rem; font-weight: bold; color: var(--dosh-blue);">
         
-        <div class="row" style="margin-top: 15px;">
+        <div class="row" style="margin-top: 20px;">
              <div class="col">
-                <label>🛠️ Mejoras / Reformas</label>
+                <label>🛠️ Presupuesto Mejoras</label>
                 <input type="number" inputmode="numeric" id="input_mejoras" value="3000000"
                        oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </div>
@@ -239,11 +519,11 @@
         
         <div class="result-box">
              <div class="result-row">
-                <span>🤝 Comisión (2%)</span>
+                <span>🤝 Comisión Corretaje (2%)</span>
                 <span id="disp_comision" class="brand-text">--</span>
             </div>
             <div class="result-row">
-                <span>🧾 IVA (19%)</span>
+                <span>🧾 IVA Débito (19%)</span>
                 <span id="disp_iva" class="brand-text">--</span>
             </div>
             <div class="result-row">
@@ -264,15 +544,14 @@
         <div class="result-box">
             
             <div class="interest-highlight">
-                <div class="result-row">
+                <div class="result-row" style="border-bottom: 1px solid rgba(0,0,0,0.1);">
                     <span>🏦 Interés Mensual (0.07%)</span>
                     <span id="res_interes_mensual" class="brand-text">$ 0</span>
                 </div>
-                <div class="result-row">
+                <div class="result-row" style="border: none; padding-bottom: 0;">
                     <span>📅 Interés Total Acumulado</span>
                     <span id="res_interes_total" class="red-text">$ 0</span>
                 </div>
-                <div style="text-align: center; font-size: 0.7rem; color: #666; margin-top: 3px;">(Calculado sobre flujo total de egresos)</div>
             </div>
 
             <div class="result-row">
@@ -293,9 +572,9 @@
                 <div id="breakdown_ingresos" class="breakdown-list"></div>
             </details>
 
-            <div class="result-row" style="margin-top: 10px; border-top: 2px solid #eee; padding-top: 10px;">
+            <div class="result-row" style="margin-top: 10px; border-top: 2px solid #eee; padding-top: 15px;">
                 <span>💰 Utilidad Bruta</span>
-                <span id="res_saldo_favor" style="font-weight: bold;">$ 0</span>
+                <span id="res_saldo_favor" style="font-weight: 700;">$ 0</span>
             </div>
 
             <div class="result-row">
@@ -304,42 +583,42 @@
             </div>
 
             <div class="result-row total-final">
-                <span>🚀 UTILIDAD NETA</span>
+                <span style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Utilidad Neta</span>
                 <span id="res_saldo_final_liquido">$ 0</span>
             </div>
             
-            <div class="row" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
-                <div class="col" style="text-align: center;">
-                    <span style="font-size: 0.8rem; color: #666;">ROI</span><br>
-                    <span id="res_roi" style="font-weight: bold; color: var(--dosh-green-dark);">0%</span>
+            <div class="row" style="margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 15px;">
+                <div class="col" style="text-align: center; border-right: 1px solid #eee;">
+                    <span style="font-size: 0.75rem; color: #666; text-transform: uppercase;">Retorno (ROI)</span><br>
+                    <span id="res_roi" style="font-size: 1.4rem; font-weight: 800; color: var(--dosh-green-dark);">0%</span>
                 </div>
                 <div class="col" style="text-align: center;">
-                    <span style="font-size: 0.8rem; color: #666;">Rentabilidad</span><br>
-                    <span id="res_rentabilidad" style="font-weight: bold; color: var(--dosh-blue);">0%</span>
+                    <span style="font-size: 0.75rem; color: #666; text-transform: uppercase;">Rentabilidad Venta</span><br>
+                    <span id="res_rentabilidad" style="font-size: 1.4rem; font-weight: 800; color: var(--dosh-blue);">0%</span>
                 </div>
             </div>
         </div>
 
-        <button class="btn-pdf" py-click="generar_pdf_completo">📥 Descargar Ficha PDF Detallada</button>
+        <button class="btn-pdf" py-click="generar_pdf_completo">📥 Descargar Ficha PDF</button>
         <button class="btn-new" py-click="nueva_operacion">🔄 Nueva Operación</button>
         <div id="mensaje"></div>
 
         <div class="nav-buttons">
-            <button class="btn-back" py-click="ir_slide_3">← Editar</button>
+            <button class="btn-back" py-click="ir_slide_3" style="width: 100%; flex: 1;">← Volver a Editar</button>
         </div>
     </div>
-    <div style="margin-top: 30px; border-top: 2px dashed #ccc; padding-top: 20px;">
-        <h2>🤖 Asesoría con IA (Gemini)</h2>
-        <button onclick="consultarGemini()" 
-                style="background: linear-gradient(45deg, #4285f4, #9b72cb); color: white; width: 100%;">
+    
+    <div style="margin-top: 40px; margin-bottom: 20px;">
+        <h2 style="border: none; padding: 0; margin-bottom: 15px;">🤖 Asesoría Inteligente</h2>
+        <button class="btn-ai" onclick="consultarGemini()">
             ✨ Analizar Oportunidad con IA
         </button>
 
-        <div id="loading_ai" style="display:none; text-align: center; margin-top: 15px;">
-            <p>🧠 Analizando números... por favor espera...</p>
+        <div id="loading_ai" style="display:none; text-align: center; margin-top: 20px; padding: 20px;">
+            <p style="color: var(--dosh-blue); font-weight: 600;">🧠 Analizando viabilidad financiera...</p>
         </div>
 
-        <div id="resultado_ai" style="margin-top: 15px; background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #ddd; display: none; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.5;"></div>
+        <div id="resultado_ai" style="margin-top: 20px; background: #fff; padding: 20px; border-radius: 16px; border-left: 5px solid var(--dosh-green); display: none; white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6; box-shadow: var(--shadow-md);"></div>
     </div>
 </div>
 
@@ -452,7 +731,9 @@
         document.getElementById("input_imagen").value = ""
         document.getElementById("preview-img").src = ""
         document.getElementById("preview-container").style.display = "none"
-        document.querySelector(".btn-file").innerText = "📷 Toca para subir foto"
+        document.querySelector(".btn-file").innerHTML = '<span style="font-size: 1.5rem;">📷</span> <span>Subir Foto de Propiedad</span>'
+        document.querySelector(".btn-file").style.background = "#e6f0fa";
+        document.querySelector(".btn-file").style.color = "#003B73";
 
         cambiar_slide("slide1")
 
@@ -707,7 +988,6 @@
 
 <script>
     async function consultarGemini() {
-        // 1. Recopilar datos (que Python ya calculó)
         const nombre = document.getElementById('input_nombre').value;
         const totalGastos = document.getElementById('res_subtotal_gastos').innerText;
         const totalIngresos = document.getElementById('res_total_ingresos').innerText;
@@ -716,7 +996,6 @@
         const rentabilidad = document.getElementById('res_rentabilidad').innerText;
         const notas = document.getElementById('input_detalles').value;
 
-        // 2. Crear el Prompt
         const prompt = `
             Actúa como un experto inversionista inmobiliario senior y asesor financiero de la constructora DosH.
             Analiza los siguientes datos de una oportunidad de remate y dame un veredicto crítico y profesional.
@@ -737,12 +1016,10 @@
             4. Se breve, directo y usa formato con viñetas.
         `;
 
-        // 3. UI Loading
         document.getElementById('loading_ai').style.display = 'block';
         document.getElementById('resultado_ai').style.display = 'none';
 
         try {
-            // Llamamos a TU propia API en Vercel
             const response = await fetch('/api/analizar', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -753,21 +1030,17 @@
             
             if (data.result) {
                 const resultDiv = document.getElementById('resultado_ai');
-                
-                // Formatear
                 resultDiv.innerHTML = data.result
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                     .replace(/\n/g, '<br>');
-                
                 resultDiv.style.display = 'block';
-                resultDiv.style.borderLeft = "5px solid #9CBF28";
             } else {
                 alert("Error: " + (data.error || "Error desconocido"));
             }
 
         } catch (error) {
             console.error(error);
-            alert("Error de conexión con el servidor. Asegúrate de que los archivos de Vercel (api/analizar.js) están subidos.");
+            alert("Error de conexión con el servidor IA.");
         } finally {
             document.getElementById('loading_ai').style.display = 'none';
         }
