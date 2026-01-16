@@ -31,7 +31,18 @@
         h2 { font-size: 1.1rem; color: var(--dosh-blue); border-bottom: 2px solid var(--dosh-green); padding-bottom: 8px; margin-top: 5px; margin-bottom: 20px; display: inline-block; width: 100%; }
         .row { display: flex; gap: 15px; margin-bottom: 15px; }
         .col { flex: 1; }
-        @media (max-width: 600px) { .row { flex-direction: column; gap: 15px; } .container { padding: 20px; min-height: 90vh; } h2 { font-size: 1.2rem; } .slide { padding-bottom: 20px; } }
+        
+        /* RESPONSIVIDAD MEJORADA */
+        @media (max-width: 600px) { 
+            .row { flex-direction: column; gap: 15px; } 
+            .container { padding: 20px; min-height: 90vh; } 
+            h2 { font-size: 1.2rem; } 
+            .slide { padding-bottom: 20px; } 
+            
+            .radio-group { flex-direction: column !important; align-items: flex-start !important; }
+            .radio-group label { margin-bottom: 10px; }
+        }
+
         label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--dosh-blue); }
         .small-note { font-size: 0.75rem; color: #999; display: block; margin-bottom: 4px; }
         input, select, textarea { width: 100%; padding: 14px; border: 2px solid #e1e5eb; border-radius: 10px; box-sizing: border-box; font-size: 16px; background-color: #fafafa; color: #333; transition: all 0.2s; }
@@ -82,6 +93,8 @@
         .icon-mode { font-size: 3.5rem; display: block; margin-bottom: 10px; }
         .badge-new { position: absolute; top: 15px; right: 15px; background: var(--dosh-green); color: white; font-size: 0.7rem; font-weight: bold; padding: 4px 8px; border-radius: 10px; text-transform: uppercase; }
         .macal-option-box { background-color: #e3f2fd; border: 1px solid #90caf9; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        
+        .radio-group { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
 
         /* --- LOGO DEV FOOTER --- */
         .watermark-dev {
@@ -92,7 +105,7 @@
             width: 100%;
         }
         .watermark-dev img {
-            max-height: 90px; /* Tamaño del logo */
+            max-height: 90px;
             width: auto;
             transition: opacity 0.3s;
         }
@@ -132,7 +145,7 @@
             </div>
 
             <div class="mode-card" py-click="iniciar_metodo_macal">
-                <span class="badge-new">Nuevo</span>
+                <span class="badge-new">!!</span>
                 <span class="icon-mode">⚖️</span>
                 <h3>Método Macal</h3>
                 <p>Calculadora especializada: Comisiones Macal, Tramos de Escrituración (UF) y fórmulas de Notaría/CBR.</p>
@@ -180,10 +193,14 @@
                 <input type="date" id="input_fecha_rescate">
             </div>
         </div>
+        
         <label>Fuente de Información</label>
         <input type="text" id="input_fuente" placeholder="Ej: Macal.cl">
+        
+        <label style="margin-top: 10px;">🔗 Link Publicación (URL)</label>
+        <input type="url" id="input_link" placeholder="https://www.macal.cl/propiedad/..." style="color: var(--dosh-blue);">
 
-        <div class="row">
+        <div class="row" style="margin-top: 15px;">
             <div class="col">
                 <label>Dirección</label>
                 <input type="text" id="input_direccion">
@@ -280,7 +297,7 @@
             <h3 style="margin-top:0; color:var(--dosh-blue); font-size:1rem;">⚙️ Configuración Macal</h3>
             
             <label>Tipo de Comisión</label>
-            <div style="display:flex; gap:15px; margin-bottom: 15px;">
+            <div class="radio-group">
                 <label style="font-weight:normal; display:flex; align-items:center; gap:5px;">
                     <input type="radio" name="macal_tipo" id="radio_normal" value="normal" checked> 
                     Normal (3% + IVA)
@@ -300,7 +317,7 @@
                 <input type="number" inputmode="numeric" id="macal_cbr_editable" value="250000" class="input-editable">
             </div>
             <div class="result-row" style="margin-top:5px;">
-                <span>📄 Escrituración (UF)</span>
+                <span>📄 Escrituración (Acorde a precio de adjudicacion)</span>
                 <span id="disp_escritura_uf" class="brand-text" style="font-size:0.9rem;">-- UF + IVA</span>
             </div>
         </div>
@@ -347,9 +364,9 @@
             
             <div class="interest-highlight">
                 <div class="result-row">
-                    <span>🏦 Interés Mensual (0.07%)</span>
+                    <span>🏦 Interés Mensual (0.7%)</span>
                     <span id="res_interes_mensual" class="brand-text">$ 0</span>
-                </div>
+                </div>  
                 <div class="result-row">
                     <span>📅 Interés Total Acumulado</span>
                     <span id="res_interes_total" class="red-text">$ 0</span>
@@ -414,11 +431,12 @@
         <h2>🤖 Asesoría con IA (Groq)</h2>
         <button onclick="consultarGroq()" 
                 style="background: linear-gradient(45deg, #4285f4, #9b72cb); color: white; width: 100%;">
-            ✨ Analizar Oportunidad con IA
+             Analizar Oportunidad con IA
         </button>
 
         <div id="loading_ai" style="display:none; text-align: center; margin-top: 15px;">
-            <p>🧠 Analizando números... por favor espera...</p>
+            <p>🧠 Cargando...</p>
+            <p>Porfavor espere</p>
         </div>
 
         <div id="resultado_ai" style="margin-top: 15px; background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #ddd; display: none; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.5;"></div>
@@ -553,7 +571,7 @@
     def ir_slide_3(e): cambiar_slide("slide3")
 
     def nueva_operacion(e):
-        ids_text = ["input_nombre", "input_direccion", "input_superficie", "input_detalles", "input_fuente"]
+        ids_text = ["input_nombre", "input_direccion", "input_superficie", "input_detalles", "input_fuente", "input_link"]
         for i in ids_text: document.getElementById(i).value = ""
 
         ids_num = ["input_postura_min", "input_oferta_max", "input_garantia", 
@@ -729,7 +747,7 @@
                                 c_legal_venta + 
                                 iva_venta)
 
-        interes_mensual = base_calculo_interes * 0.0007
+        interes_mensual = base_calculo_interes * 0.007
         interes_total = interes_mensual * meses_interes
 
         subtotal_gasto = base_calculo_interes + interes_total
@@ -820,6 +838,21 @@
         utilidad = document.getElementById("res_saldo_final_liquido").innerText
         
         doc = window.jspdf.jsPDF.new()
+        
+        # --- IMAGEN PDF (CORREGIDO) ---
+        img_element = document.getElementById("preview-img")
+        if img_element.src and "data:image" in img_element.src:
+            try:
+                orig_w = img_element.naturalWidth
+                orig_h = img_element.naturalHeight
+                max_w = 50; max_h = 50
+                ratio = orig_w / orig_h
+                if ratio > 1: final_w = max_w; final_h = max_w / ratio
+                else: final_h = max_h; final_w = max_h * ratio
+                # Estampa la imagen en x=140, y=10
+                doc.addImage(img_element.src, "JPEG", 140, 10, final_w, final_h)
+            except: pass 
+        
         doc.setFont("helvetica", "bold"); doc.setFontSize(22)
         
         if MODO_ACTUAL == "MACAL":
@@ -865,17 +898,52 @@
         const utilidad = document.getElementById('res_saldo_final_liquido').innerText;
         const roi = document.getElementById('res_roi').innerText;
         const notas = document.getElementById('input_detalles').value;
+        const mejoras = document.getElementById('input_mejoras').value;
+        const link = document.getElementById('input_link').value || "No especificado";
+        
+        // Detectar si es Macal para dar contexto extra
+        const esMacal = typeof MODO_ACTUAL !== 'undefined' && MODO_ACTUAL === "MACAL";
+        const contextoExtra = esMacal ? "Considera que es un Remate Macal: Comisión 3%+IVA y gastos operacionales fijos en UF." : "Es un remate judicial tradicional.";
 
         const prompt = `
-            Actúa como experto inmobiliario. Analiza esta oportunidad de inversión:
-            - Nombre: ${nombre}
-            - Inversión Total: ${totalGastos}
-            - Venta Estimada: ${totalIngresos}
+            Actúa como un Senior Real Estate Investment Analyst (Analista de Inversiones Inmobiliarias Senior). 
+            Tu trabajo es proteger mi capital. Sé crítico, escéptico y directo.
+            
+            CONTEXTO DEL NEGOCIO:
+            ${contextoExtra}
+            Link Referencia: ${link} (Úsalo para inferir contexto si es posible, o menciónalo como fuente)
+            
+            DATOS FINANCIEROS:
+            - Oportunidad: ${nombre}
+            - Inversión Total (All-in): ${totalGastos}
+            - Venta Proyectada: ${totalIngresos}
+            - Presupuesto Mejoras: $${mejoras}
             - Utilidad Neta: ${utilidad}
             - ROI: ${roi}
-            - Notas: "${notas}"
+            - Rentabilidad s/Venta: ${rentabilidad}
+            
+            NOTAS DEL TERRENO/ESTADO (CRÍTICO):
+            "${notas}"
 
-            Dame un veredicto de aprobación (Si/No/Revisar) y 3 puntos clave de riesgo o beneficio. Breve.
+            TU TAREA (Responde en este formato exacto):
+
+            1. 🛡️ ANÁLISIS DE RIESGO (0-10):
+               - Califica el riesgo del 1 al 10.
+               - Si las notas dicen "Ocupada", asume riesgo alto por desalojo (costo y tiempo).
+               - Si el ROI es menor al 15%, advierte que el margen es muy estrecho para imprevistos.
+
+            2. 📉 STRESS TEST (Escenario Pesimista):
+               - ¿Sigo ganando dinero si la propiedad se vende un 10% más barata de lo estimado? Responde SI/NO y por qué.
+               - ¿Es el presupuesto de mejoras realista para el estado descrito?
+
+            3. 💡 VEREDICTO PROFESIONAL:
+               - ¿APRUEBAS o RECHAZAS la operación?
+               - Dame 1 razón técnica (ej: liquidez, carga financiera, margen de seguridad).
+
+            4. 🚀 ACCIONES INMEDIATAS:
+               - Menciona 2 cosas que debo ir a investigar YA (ej: deudas de gastos comunes, estado del techo, precio m2 vecinal).
+
+            - Despídete siempre diciendo: "Análisis ejecutado por el algoritmo de Hizoka."
         `;
 
         document.getElementById('loading_ai').style.display = 'block';
@@ -899,17 +967,16 @@
             }
 
         } catch (error) {
-            console.warn("⚠️ No se pudo conectar con la API real. Usando modo simulación.", error);
+            console.warn("⚠️ Modo simulación activado.", error);
             const respuestaSimulada = `
-            <strong>⚠️ MODO DEMOSTRACIÓN (Sin conexión a servidor)</strong><br><br>
-            <strong>VEREDICTO: APROBADO (Preliminar)</strong>
-            <br><br>
-            Basado en los números ingresados para <strong>${nombre}</strong>:
-            <ul>
-                <li>✅ <strong>Rentabilidad:</strong> Un ROI de ${roi} es positivo.</li>
-                <li>⚠️ <strong>Riesgo:</strong> Revisa el estado de ocupación y deudas.</li>
-                <li>💡 <strong>Consejo:</strong> Valida los costos de mejoras estimados.</li>
-            </ul>
+            <strong>⚠️ MODO DEMOSTRACIÓN</strong><br><br>
+            <strong>1. 🛡️ ANÁLISIS DE RIESGO: 7/10</strong><br>
+            El riesgo es medio-alto. Al ser una propiedad "Ocupada", debes considerar 6-8 meses de juicio de precario. Tu ROI de ${roi} es atractivo, pero se diluirá en el tiempo.<br><br>
+            <strong>2. 📉 STRESS TEST:</strong><br>
+            Si vendes un 10% más barato, tu utilidad cae drásticamente. El margen de seguridad es bajo.<br><br>
+            <strong>3. 💡 VEREDICTO: REVISAR CON CAUTELA</strong><br>
+            Solo ofertar si tienes espalda financiera para aguantar 12 meses sin liquidez.<br><br>
+            <br><em>Análisis ejecutado por el algoritmo de Hizoka.</em>
             `;
             setTimeout(() => {
                 mostrarResultado(respuestaSimulada);
@@ -919,7 +986,14 @@
 
     function mostrarResultado(textoHTML) {
         const resultDiv = document.getElementById('resultado_ai');
-        let formatted = textoHTML.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // Convertimos markdown a HTML simple
+        let formatted = textoHTML
+            .replace(/\n/g, '<br>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/🛡️/g, '<span style="font-size:1.2em">🛡️</span>')
+            .replace(/📉/g, '<span style="font-size:1.2em">📉</span>')
+            .replace(/💡/g, '<span style="font-size:1.2em">💡</span>');
+            
         resultDiv.innerHTML = formatted;
         resultDiv.style.display = 'block';
         resultDiv.style.borderLeft = "5px solid #9CBF28"; 
