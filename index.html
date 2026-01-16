@@ -839,6 +839,7 @@
         
         nombre = document.getElementById("input_nombre").value
         str_remate = document.getElementById("input_fecha_remate").value
+        str_link = document.getElementById("input_link").value or "No especificado"
         
         # Recuperar totales visuales
         ingresos = document.getElementById("res_total_ingresos").innerText
@@ -874,9 +875,13 @@
         doc.setTextColor(0, 0, 0); doc.setFontSize(12)
         doc.text(f"Oportunidad: {nombre}", 20, 40)
         doc.text(f"Fecha Remate: {str_remate}", 20, 48)
+
+        doc.setFontSize(9) # Letra más pequeña para que quepa la URL
+        doc.setTextColor(0, 59, 115) # Azul Dosh
+        doc.text(f"Link: {str_link}", 20, 54)
         
         doc.setDrawColor(156, 191, 40) # Verde Dosh
-        doc.line(20, 55, 190, 55)
+        doc.line(20, 60, 190, 60)
         
         doc.setFontSize(14); doc.text("Resumen Financiero", 20, 70)
         doc.setFontSize(11)
