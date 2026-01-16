@@ -456,6 +456,7 @@
 </div>
 
 <script type="py">
+    
     from pyscript import document, window
     from js import jspdf
     import datetime
@@ -479,9 +480,9 @@
         "Aysén": ["Coyhaique", "Lago Verde", "Aysén", "Cisnes", "Guaitecas", "Cochrane", "O'Higgins", "Tortel", "Chile Chico", "Río Ibáñez"],
         "Magallanes": ["Punta Arenas", "Laguna Blanca", "Río Verde", "San Gregorio", "Cabo de Hornos", "Antártica", "Porvenir", "Primavera", "Timaukel", "Natales", "Torres del Paine"]
     }
-
+    
     # --- CONSTANTES ---
-    VALOR_UF = 38000 # Valor referencia UF para cálculos
+    VALOR_UF = 38000 # Valor referencia UF para cálculos    
     DEF_ABOGADO = 1600000
     DEF_NOTARIA = 300000
     DEF_CBR = 300000
@@ -898,6 +899,9 @@
         
         doc.setFontSize(16); doc.setTextColor(0, 100, 0)
         doc.text(f"UTILIDAD NETA: {utilidad}", 20, y_det+10)
+
+        pdf_base64 = doc.output('datauristring')
+        window.enviarPDFAlBackend(pdf_base64, nombre)
         
         doc.save(f"Ficha_{nombre}.pdf")
         document.getElementById("mensaje").innerText = "✅ PDF Generado"
@@ -1021,6 +1025,42 @@
         document.getElementById('loading_ai').style.display = 'none';
     }
 </script>
+
+<script>
+    // ... tu código existente ...
+
+    async function enviarPDFAlBackend(pdfDataUri, nombreArchivo) {
+        const mensajeDiv = document.getElementById("mensaje");
+        mensajeDiv.innerText = "⏳ Generando PDF y enviando correo...";
+        
+        try {
+            // El correo "preseleccionado" puede ir hardcodeado aquí o en el backend
+            // Aquí lo dejamos flexible por si quieres cambiarlo en el futuro
+            const response = await fetch('/api/enviar-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pdfBase64: pdfDataUri,
+                    nombreArchivo: nombreArchivo,
+                    destinatario: "tucorreo@ejemplo.com" // <--- CAMBIA ESTO POR EL CORREO FIJO
+                })
+            });
+
+            if (response.ok) {
+                mensajeDiv.innerText = "✅ PDF Descargado y enviado por correo.";
+            } else {
+                mensajeDiv.innerText = "⚠️ PDF Descargado, pero falló el envío de correo.";
+                console.error("Error envío:", await response.text());
+            }
+        } catch (e) {
+            console.error(e);
+            mensajeDiv.innerText = "⚠️ Error de conexión al enviar correo.";
+        }
+    }
+</script>
+
+
+
 
 </body>
 </html>
