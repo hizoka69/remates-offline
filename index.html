@@ -39,8 +39,16 @@
             h2 { font-size: 1.2rem; } 
             .slide { padding-bottom: 20px; } 
             
+            /* Corrección visual para celulares en selección de comisión */
             .radio-group { flex-direction: column !important; align-items: flex-start !important; }
-            .radio-group label { margin-bottom: 10px; }
+            .radio-group label { 
+                margin-bottom: 10px; 
+                width: 100%; 
+                background: #f8f9fa; 
+                padding: 10px; 
+                border-radius: 8px; 
+                border: 1px solid #e1e5eb;
+            }
         }
 
         label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--dosh-blue); }
@@ -145,7 +153,7 @@
             </div>
 
             <div class="mode-card" py-click="iniciar_metodo_macal">
-                <span class="badge-new">!!</span>
+                <span class="badge-new">Nuevo</span>
                 <span class="icon-mode">⚖️</span>
                 <h3>Método Macal</h3>
                 <p>Calculadora especializada: Comisiones Macal, Tramos de Escrituración (UF) y fórmulas de Notaría/CBR.</p>
@@ -849,8 +857,10 @@
                 ratio = orig_w / orig_h
                 if ratio > 1: final_w = max_w; final_h = max_w / ratio
                 else: final_h = max_h; final_w = max_h * ratio
-                # Estampa la imagen en x=140, y=10
-                doc.addImage(img_element.src, "JPEG", 140, 10, final_w, final_h)
+                
+                # Detectar tipo de imagen (PNG o JPEG)
+                img_format = "PNG" if "png" in img_element.src else "JPEG"
+                doc.addImage(img_element.src, img_format, 140, 10, final_w, final_h)
             except: pass 
         
         doc.setFont("helvetica", "bold"); doc.setFontSize(22)
@@ -897,12 +907,16 @@
         const totalIngresos = document.getElementById('res_total_ingresos').innerText;
         const utilidad = document.getElementById('res_saldo_final_liquido').innerText;
         const roi = document.getElementById('res_roi').innerText;
+        const rentabilidad = document.getElementById('res_rentabilidad').innerText;
         const notas = document.getElementById('input_detalles').value;
         const mejoras = document.getElementById('input_mejoras').value;
         const link = document.getElementById('input_link').value || "No especificado";
         
-        // Detectar si es Macal para dar contexto extra
-        const esMacal = typeof MODO_ACTUAL !== 'undefined' && MODO_ACTUAL === "MACAL";
+        // --- DETECCIÓN CORREGIDA DE MODO MACAL ---
+        // Verificamos si el div de opciones Macal está visible en la pantalla
+        const macalDiv = document.getElementById('macal_options');
+        const esMacal = macalDiv && macalDiv.style.display !== 'none';
+        
         const contextoExtra = esMacal ? "Considera que es un Remate Macal: Comisión 3%+IVA y gastos operacionales fijos en UF." : "Es un remate judicial tradicional.";
 
         const prompt = `
@@ -943,7 +957,9 @@
             4. 🚀 ACCIONES INMEDIATAS:
                - Menciona 2 cosas que debo ir a investigar YA (ej: deudas de gastos comunes, estado del techo, precio m2 vecinal).
 
-            - Despídete siempre diciendo: "Análisis ejecutado por el algoritmo de Hizoka."
+
+            HAZ UNA CONCLUSION COMPLETA Y CERTERA PERO A LA VEZ BREVE.
+            - Despídete siempre diciendo: "Programa desarrollado po Hizoka."
         `;
 
         document.getElementById('loading_ai').style.display = 'block';
@@ -976,7 +992,7 @@
             Si vendes un 10% más barato, tu utilidad cae drásticamente. El margen de seguridad es bajo.<br><br>
             <strong>3. 💡 VEREDICTO: REVISAR CON CAUTELA</strong><br>
             Solo ofertar si tienes espalda financiera para aguantar 12 meses sin liquidez.<br><br>
-            <br><em>Análisis ejecutado por el algoritmo de Hizoka.</em>
+            <br><em>Programa desarrollado por Hizoka.</em>
             `;
             setTimeout(() => {
                 mostrarResultado(respuestaSimulada);
