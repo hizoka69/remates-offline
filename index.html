@@ -503,7 +503,7 @@
         </div>
     </div>
 
-<div id="slide_final" class="slide">
+    <div id="slide_final" class="slide">
         <h2>📊 Resumen Financiero</h2>
         
         <div class="result-box">
@@ -565,16 +565,13 @@
 
         <div id="sec_ia" style="margin-top: 20px; margin-bottom: 20px;">
             <button onclick="consultarGroq()" 
-                    style="background: linear-gradient(45deg, #4285f4, #9b72cb); color: white; width: 100%; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3);">
+                    style="background: linear-gradient(45deg, #4285f4, #9b72cb); color: white; width: 100%; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); position: relative; z-index: 10;">
                  🤖 Analizar Oportunidad con IA
             </button>
-    
-            <div id="loading_ai" style="display:none; text-align: center; margin-top: 15px;">
-                <div class="spinner" style="width: 30px; height: 30px; border-width: 3px;"></div>
-                <p style="font-size: 0.8rem; margin-top: 5px;">Pensando...</p>
+            
+            <div id="loading_ai" style="display:none; text-align: center; margin-top: 10px;">
+                <span style="font-size: 0.9rem; color: #666;">🧠 Pensando...</span>
             </div>
-    
-            <div id="resultado_ai" class="bubble-right" style="display: none;"></div>
         </div>
 
         <div class="result-box" style="background-color: #e3f2fd; border-color: #90caf9; margin-bottom: 15px;">
@@ -594,23 +591,8 @@
             <button class="btn-back" py-click="ir_slide_3">← Editar</button>
         </div>
     </div>
-    
-<div id="sec_ia" style="margin-top: 20px; margin-bottom: 20px;">
-            <button onclick="consultarGroq()" 
-                    style="background: linear-gradient(45deg, #4285f4, #9b72cb); color: white; width: 100%; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); position: relative; z-index: 10;">
-                 🤖 Analizar Oportunidad con IA
-            </button>
-            
-            <div id="loading_ai" style="display:none; text-align: center; margin-top: 10px;">
-                <span style="font-size: 0.9rem; color: #666;">🧠 Pensando...</span>
-            </div>
-        </div>
+</div>
 
-        ```
-
-**B. Agrega este bloque HTML nuevo justo ANTES de cerrar el `</body>` (al final del archivo, fuera del div `container`):**
-
-```html
 <div id="ia_sidebar" class="ia-sidebar">
     <div class="ia-header">
         <h3>🤖 Análisis IA</h3>
@@ -627,6 +609,7 @@
         </button>
     </div>
 </div>
+
 <div class="watermark-dev">
     <img src="hzz.png" alt="Desarrollado por Joaquín Hernández">
 </div>
@@ -701,7 +684,7 @@
     def cambiar_slide(id_mostrar):
         ids = ["slide_selection", "slide1", "slide2", "slide3", "slide_final"]
         subt = document.getElementById("main_subtitle")
-        sec_ia = document.getElementById("sec_ia")
+        # Ya no necesitamos sec_ia aquí porque ahora es parte de slide_final
 
         # --- CORRECCIÓN AQUÍ ---
         # En lugar de usar window.history.pushState con un diccionario Python (que causa error),
@@ -711,13 +694,10 @@
         # Actualizar títulos según la slide
         if id_mostrar == "slide_selection":
              subt.innerText = "Selecciona el tipo de evaluación"
-             sec_ia.style.display = "none"
         elif id_mostrar == "slide_final":
              subt.innerText = "Resumen de Resultados"
-             sec_ia.style.display = "block"
         else:
              subt.innerText = "Evaluación Económica de Remates"
-             sec_ia.style.display = "none"
 
         # Mostrar/Ocultar slides
         for i in ids:
@@ -731,39 +711,6 @@
     # --- FUNCIONES DE MODO ---
     def ir_menu_principal(e):
         cambiar_slide("slide_selection")
-
-
-
-    # --- LÓGICA DE CONVERSIÓN UF ---
-    
-    def obtener_valor_uf_actual():
-        try:
-            return float(document.getElementById("input_valor_uf_dia").value)
-        except:
-            return 38000.0
-
-    def convertir_uf_a_clp(e):
-        uf_actual = obtener_valor_uf_actual()
-        try:
-            val_uf = float(document.getElementById("input_postura_min_uf").value)
-            val_clp = round(val_uf * uf_actual)
-            document.getElementById("input_postura_min").value = str(val_clp)
-        except:
-            document.getElementById("input_postura_min").value = ""
-
-    def convertir_clp_a_uf(e):
-        uf_actual = obtener_valor_uf_actual()
-        try:
-            val_clp = float(document.getElementById("input_postura_min").value)
-            if uf_actual > 0:
-                val_uf = round(val_clp / uf_actual, 2)
-                document.getElementById("input_postura_min_uf").value = str(val_uf)
-        except:
-            document.getElementById("input_postura_min_uf").value = ""
-
-    def recalcular_todo_uf(e):
-        # Si cambian el valor de la UF del día, actualizamos la conversión existente
-        convertir_uf_a_clp(None)
     
     def iniciar_metodo_normal(e):
         global MODO_ACTUAL
@@ -785,12 +732,10 @@
     def ir_slide_2(e): cambiar_slide("slide2")
     def ir_slide_3(e): cambiar_slide("slide3")
 
-def nueva_operacion(e):
+    def nueva_operacion(e):
         ids_text = ["input_nombre", "input_direccion", "input_superficie", "input_detalles", "input_fuente", "input_link"]
         for i in ids_text: document.getElementById(i).value = ""
-
-        ids_num = ["input_postura_min", "input_oferta_max", "input_garantia", 
-                   "input_venta_vivienda", "input_mejoras", "cant_mes"]
+        ids_num = ["input_postura_min", "input_oferta_max", "input_garantia", "input_venta_vivienda", "input_mejoras", "cant_mes"]
         for i in ids_num: document.getElementById(i).value = "0"
         
         # Reset Costos Default
@@ -824,7 +769,7 @@ def nueva_operacion(e):
         document.getElementById("mensaje").innerText = ""
         document.getElementById("breakdown_gastos").innerHTML = ""
         document.getElementById("breakdown_ingresos").innerHTML = ""
-        document.getElementById("resultado_ai").style.display = "none"
+        # document.getElementById("resultado_ai").style.display = "none" # Ya no es necesario
         
         # --- CORRECCIÓN AQUÍ ---
         document.getElementById("input_imagen").value = ""
@@ -847,6 +792,37 @@ def nueva_operacion(e):
     
     def crear_titulo_desglose(titulo):
         return f'<div class="breakdown-title">{titulo}</div>'
+
+    # --- LÓGICA DE CONVERSIÓN UF ---
+    
+    def obtener_valor_uf_actual():
+        try:
+            return float(document.getElementById("input_valor_uf_dia").value)
+        except:
+            return 38000.0
+
+    def convertir_uf_a_clp(e):
+        uf_actual = obtener_valor_uf_actual()
+        try:
+            val_uf = float(document.getElementById("input_postura_min_uf").value)
+            val_clp = round(val_uf * uf_actual)
+            document.getElementById("input_postura_min").value = str(val_clp)
+        except:
+            document.getElementById("input_postura_min").value = ""
+
+    def convertir_clp_a_uf(e):
+        uf_actual = obtener_valor_uf_actual()
+        try:
+            val_clp = float(document.getElementById("input_postura_min").value)
+            if uf_actual > 0:
+                val_uf = round(val_clp / uf_actual, 2)
+                document.getElementById("input_postura_min_uf").value = str(val_uf)
+        except:
+            document.getElementById("input_postura_min_uf").value = ""
+
+    def recalcular_todo_uf(e):
+        # Si cambian el valor de la UF del día, actualizamos la conversión existente
+        convertir_uf_a_clp(None)
 
     def calcular_escritura_macal(precio_adj):
         # Usamos el valor dinámico
@@ -979,7 +955,7 @@ def nueva_operacion(e):
         cambiar_slide("slide_final")
 
     # --- PDF GENERATOR (OPTIMIZADO) ---
-def crear_pdf_objeto():
+    def crear_pdf_objeto():
         # 1. Asegurar cálculos actualizados
         calcular_y_mostrar_final(None)
         
@@ -1190,12 +1166,10 @@ def crear_pdf_objeto():
 </script>
 
 <script>
-    // 4.1 Función de IA (Groq)
-// Variable global para saber si incluimos la IA en el PDF
+    // Variable global para saber si incluimos la IA en el PDF
     window.incluirIAPdf = false;
 
     async function consultarGroq() {
-        // ... (Recolección de datos igual que antes) ...
         const nombre = document.getElementById('input_nombre').value || "Propiedad Ejemplo";
         const totalGastos = document.getElementById('res_subtotal_gastos').innerText;
         const totalIngresos = document.getElementById('res_total_ingresos').innerText;
@@ -1213,14 +1187,7 @@ def crear_pdf_objeto():
         const prompt = `
             Actúa como un Senior Real Estate Investment Analyst.
             CONTEXTO: ${contextoExtra}. Link: ${link}.
-            DATOS: Oportunidad: ${nombre}, 
-            Inversión: ${totalGastos},
-             Venta: ${totalIngresos}, 
-             Mejoras: ${mejoras}, 
-             Utilidad: ${utilidad},
-              ROI: ${roi},
-             Rentabilidad: ${rentabilidad}.
-
+            DATOS: Oportunidad: ${nombre}, Inversión: ${totalGastos}, Venta: ${totalIngresos}, Mejoras: ${mejoras}, Utilidad: ${utilidad}, ROI: ${roi}, Rentabilidad: ${rentabilidad}.
             NOTAS: "${notas}"
             
             TU TAREA (HTML simple, sin markdown):
@@ -1228,10 +1195,7 @@ def crear_pdf_objeto():
             2. 📉 STRESS TEST: ¿Aguanta venta -10%?
             3. 💡 VEREDICTO: APRUEBAS o RECHAZAS y por qué.
             4. 🚀 2 ACCIONES INMEDIATAS.
-            CONCLUSIÓN BREVE. 
-            
-            
-            Firma: "Programa desarrollado por Hizoka."
+            CONCLUSIÓN BREVE. Firma: "Programa desarrollado por Hizoka."
         `;
 
         document.getElementById('loading_ai').style.display = 'block';
@@ -1350,17 +1314,14 @@ def crear_pdf_objeto():
     function mostrarSlideVisual(id_mostrar) {
         const ids = ["slide_selection", "slide1", "slide2", "slide3", "slide_final"];
         const subt = document.getElementById("main_subtitle");
-        const sec_ia = document.getElementById("sec_ia");
+        // const sec_ia = document.getElementById("sec_ia"); // YA NO SE USA AQUÍ
 
         if (id_mostrar === "slide_selection") {
              subt.innerText = "Selecciona el tipo de evaluación";
-             sec_ia.style.display = "none";
         } else if (id_mostrar === "slide_final") {
              subt.innerText = "Resumen de Resultados";
-             sec_ia.style.display = "block";
         } else {
              subt.innerText = "Evaluación Económica de Remates";
-             sec_ia.style.display = "none";
         }
 
         ids.forEach(id => {
