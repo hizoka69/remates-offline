@@ -196,14 +196,13 @@
 
     <div id="slide1" class="slide">
         <h2>1. Ficha Técnica</h2>
-        <label>Imagen de la Propiedad (Opcional)</label>
+<label>Imagen de la Propiedad (Opcional)</label>
         <div class="file-upload-wrapper">
             <div class="btn-file">📷 Toca para subir foto</div>
-            <input type="file" id="input_imagen" accept="image/*" onchange="procesarImagen(this)">
+            <input type="file" id="input_imagen" accept="image/*" multiple onchange="procesarImagen(this)">
         </div>
-        <div id="preview-container">
-            <img id="preview-img" src="" alt="Vista previa">
-        </div>
+        <div id="preview-container" class="gallery-preview" style="display:none;">
+            </div>
         <div class="row">
             <div class="col">
                 <label>Región</label>
