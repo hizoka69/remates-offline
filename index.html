@@ -59,6 +59,24 @@
             .radio-group label { margin-bottom: 10px; width: 100%; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #e1e5eb; }
         }
 
+        /* --- NUEVO: Estilos para Galería de Fotos --- */
+        .gallery-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        /* Clase especial que usaremos para que Python encuentre las fotos */
+        .img-thumbnail { 
+            width: 80px; 
+            height: 80px; 
+            object-fit: cover; 
+            border-radius: 8px; 
+            border: 2px solid #fff; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+        }
+
         /* Estilos generales de inputs, botones y textos */
         label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--dosh-blue); }
         .small-note { font-size: 0.75rem; color: #999; display: block; margin-bottom: 4px; }
@@ -124,18 +142,26 @@
         .watermark-dev img:hover { opacity: 1; }
     </style>
     
-    <script>
-        // Función JS simple para previsualizar imágenes sin depender de Python
+<script>
         function procesarImagen(input) {
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    var img = document.getElementById('preview-img');
-                    img.src = e.target.result;
-                    document.getElementById('preview-container').style.display = 'block';
-                    document.querySelector('.btn-file').innerText = "✅ Foto cargada";
-                }
-                reader.readAsDataURL(input.files[0]);
+            var container = document.getElementById('preview-container');
+            container.innerHTML = ""; // Limpiar fotos anteriores
+            
+            if (input.files && input.files.length > 0) {
+                // Convertimos la lista de archivos a un Array para recorrerlo
+                Array.from(input.files).forEach(file => {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        var img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = "img-thumbnail"; // Importante para Python
+                        container.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                });
+                
+                document.getElementById('preview-container').style.display = 'flex';
+                document.querySelector('.btn-file').innerText = "✅ " + input.files.length + " Fotos cargadas";
             }
         }
     </script>
@@ -728,7 +754,7 @@
         cambiar_slide("slide_final")
 
     # --- PDF GENERATOR (OPTIMIZADO) ---
-    def crear_pdf_objeto():
+def crear_pdf_objeto():
         calcular_y_mostrar_final(None)
         nombre = document.getElementById("input_nombre").value
         str_remate = document.getElementById("input_fecha_remate").value
@@ -738,18 +764,27 @@
         utilidad = document.getElementById("res_saldo_final_liquido").innerText
         
         doc = window.jspdf.jsPDF.new()
-        img_element = document.getElementById("preview-img")
-        if img_element.src and "data:image" in img_element.src:
-            try:
-                orig_w = img_element.naturalWidth; orig_h = img_element.naturalHeight
-                max_w = 50; max_h = 50
-                ratio = orig_w / orig_h
-                if ratio > 1: final_w = max_w; final_h = max_w / ratio
-                else: final_h = max_h; final_w = max_h * ratio
-                img_format = "PNG" if "png" in img_element.src else "JPEG"
-                doc.addImage(img_element.src, img_format, 140, 10, final_w, final_h)
-            except: pass 
         
+        # --- NUEVA LÓGICA DE IMÁGENES MÚLTIPLES ---
+        # Buscamos todas las imágenes por la clase que definimos en CSS
+        imgs_collection = document.getElementsByClassName("img-thumbnail")
+        
+        # 1. IMAGEN PRINCIPAL (HEADER) - Toma la primera foto (índice 0)
+        if imgs_collection.length > 0:
+            main_img = imgs_collection[0]
+            if main_img.src and "data:image" in main_img.src:
+                try:
+                    orig_w = main_img.naturalWidth; orig_h = main_img.naturalHeight
+                    max_w = 50; max_h = 50
+                    ratio = orig_w / orig_h
+                    if ratio > 1: final_w = max_w; final_h = max_w / ratio
+                    else: final_h = max_h; final_w = max_h * ratio
+                    
+                    img_format = "PNG" if "png" in main_img.src else "JPEG"
+                    doc.addImage(main_img.src, img_format, 140, 10, final_w, final_h)
+                except: pass 
+
+        # --- TEXTOS DEL REPORTE (Igual que antes) ---
         doc.setFont("helvetica", "bold"); doc.setFontSize(22)
         if MODO_ACTUAL == "MACAL":
             doc.setTextColor(0, 59, 115)
@@ -776,6 +811,41 @@
              doc.text(f"- Notaría + CBR: {format_money(MACAL_COSTO_NOTARIA + MACAL_COSTO_CBR)}", 20, y_det); y_det+=10
         doc.setFontSize(16); doc.setTextColor(0, 100, 0)
         doc.text(f"UTILIDAD NETA: {utilidad}", 20, y_det+10)
+
+        # 2. GALERÍA DE FOTOS ADICIONALES (NUEVA PÁGINA)
+        # Si hay más de 1 foto, creamos página nueva
+        if imgs_collection.length > 1:
+            doc.addPage()
+            doc.setTextColor(0, 59, 115)
+            doc.setFontSize(16)
+            doc.text("Anexo: Galería Fotográfica", 20, 20)
+            
+            # Configuración de grilla (2 columnas)
+            x_pos = 20
+            y_pos = 30
+            w_img = 80
+            h_img = 60
+            
+            # Iteramos desde la segunda imagen (índice 1) en adelante
+            for i in range(1, imgs_collection.length):
+                img = imgs_collection[i]
+                if img.src and "data:image" in img.src:
+                    try:
+                        format_gal = "PNG" if "png" in img.src else "JPEG"
+                        doc.addImage(img.src, format_gal, x_pos, y_pos, w_img, h_img)
+                        
+                        # Mover cursor para la siguiente foto
+                        if x_pos == 20:
+                            x_pos = 110 # Mover a columna derecha
+                        else:
+                            x_pos = 20  # Volver a columna izquierda
+                            y_pos += 70 # Bajar una fila
+                        
+                        # Si se acaba la hoja, crear otra
+                        if y_pos > 230:
+                            doc.addPage()
+                            y_pos = 20
+                    except: pass
 
         return doc, nombre
 
