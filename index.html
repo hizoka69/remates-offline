@@ -833,6 +833,7 @@ def crear_pdf_objeto():
         # 2. Capturar Datos Básicos
         nombre = document.getElementById("input_nombre").value
         str_remate = document.getElementById("input_fecha_remate").value
+        str_rescate = document.getElementById("input_fecha_rescate").value
         str_link = document.getElementById("input_link").value or "No especificado"
         notas = document.getElementById("input_detalles").value or "Sin observaciones registradas."
         
@@ -904,9 +905,10 @@ def crear_pdf_objeto():
         
         doc.setFontSize(11); doc.setTextColor(0, 0, 0)
         doc.text(f"Oportunidad: {nombre}", 20, 35)
-        doc.text(f"Fecha Remate: {str_remate}", 20, 42)
+        doc.text(f"Fecha Remate: {str_remate}", 20, 40)
+        doc.text(f"Fecha Rescate: {str_rescate}", 20, 45)
         doc.setFontSize(9); doc.setTextColor(0, 59, 115)
-        doc.text(f"Link: {str_link}", 20, 49)
+        doc.text(f"Link: {str_link}", 20, 50)
         
         # Cursor Y dinámico
         y = 60
