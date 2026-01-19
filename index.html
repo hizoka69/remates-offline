@@ -186,7 +186,7 @@
                 <p>Cálculo tradicional con honorarios de búsqueda y costos operacionales estándar.</p>
             </div>
             <div class="mode-card" py-click="iniciar_metodo_macal">
-                <span class="badge-new">Nuevo</span>
+                <span class="badge-new">!</span>
                 <span class="icon-mode">⚖️</span>
                 <h3>Método Macal</h3>
                 <p>Calculadora especializada: Comisiones Macal, Tramos de Escrituración (UF) y fórmulas de Notaría/CBR.</p>
@@ -249,16 +249,41 @@
         </div>
     </div>
 
-    <div id="slide2" class="slide">
+<div id="slide2" class="slide">
         <h2>2. Inversión y Costos</h2>
+        
+        <div class="result-box" style="background: #eef2f7; border-color: #b0c4de; margin-bottom: 15px; padding: 10px;">
+            <div class="row" style="margin-bottom: 0; align-items: center;">
+                <div class="col" style="flex: 0.7;">
+                    <label style="margin-bottom: 0;">📈 Valor UF Hoy ($)</label>
+                </div>
+                <div class="col">
+                    <input type="number" inputmode="numeric" id="input_valor_uf_dia" value="38000" 
+                           style="font-weight: bold; color: var(--dosh-blue); text-align: right;"
+                           py-change="recalcular_todo_uf">
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col">
-                <label>Postura Mínima ($)</label>
-                <input type="number" inputmode="numeric" id="input_postura_min" value="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                <label>Postura Mínima</label>
+                <div style="display: flex; gap: 5px;">
+                    <input type="number" id="input_postura_min_uf" placeholder="UF" 
+                           style="flex: 0.8; font-size: 0.9rem; padding: 10px;"
+                           py-input="convertir_uf_a_clp">
+                    
+                    <input type="number" inputmode="numeric" id="input_postura_min" placeholder="$ CLP" value="0"
+                           style="flex: 1.2; font-weight: bold;"
+                           py-input="convertir_clp_a_uf">
+                </div>
+                <span class="small-note">Escribe en UF o Pesos, el otro se calcula solo.</span>
             </div>
+            
             <div class="col">
                 <label>Oferta Máxima ($)</label>
-                <input type="number" inputmode="numeric" id="input_oferta_max" value="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                <input type="number" inputmode="numeric" id="input_oferta_max" value="0"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </div>
         </div>
         <div class="row">
@@ -553,6 +578,39 @@
     # --- FUNCIONES DE MODO ---
     def ir_menu_principal(e):
         cambiar_slide("slide_selection")
+
+
+
+    # --- LÓGICA DE CONVERSIÓN UF ---
+    
+    def obtener_valor_uf_actual():
+        try:
+            return float(document.getElementById("input_valor_uf_dia").value)
+        except:
+            return 38000.0
+
+    def convertir_uf_a_clp(e):
+        uf_actual = obtener_valor_uf_actual()
+        try:
+            val_uf = float(document.getElementById("input_postura_min_uf").value)
+            val_clp = round(val_uf * uf_actual)
+            document.getElementById("input_postura_min").value = str(val_clp)
+        except:
+            document.getElementById("input_postura_min").value = ""
+
+    def convertir_clp_a_uf(e):
+        uf_actual = obtener_valor_uf_actual()
+        try:
+            val_clp = float(document.getElementById("input_postura_min").value)
+            if uf_actual > 0:
+                val_uf = round(val_clp / uf_actual, 2)
+                document.getElementById("input_postura_min_uf").value = str(val_uf)
+        except:
+            document.getElementById("input_postura_min_uf").value = ""
+
+    def recalcular_todo_uf(e):
+        # Si cambian el valor de la UF del día, actualizamos la conversión existente
+        convertir_uf_a_clp(None)
     
     def iniciar_metodo_normal(e):
         global MODO_ACTUAL
@@ -574,12 +632,15 @@
     def ir_slide_2(e): cambiar_slide("slide2")
     def ir_slide_3(e): cambiar_slide("slide3")
 
-    def nueva_operacion(e):
+def nueva_operacion(e):
         ids_text = ["input_nombre", "input_direccion", "input_superficie", "input_detalles", "input_fuente", "input_link"]
         for i in ids_text: document.getElementById(i).value = ""
-        ids_num = ["input_postura_min", "input_oferta_max", "input_garantia", "input_venta_vivienda", "input_mejoras", "cant_mes"]
+
+        ids_num = ["input_postura_min", "input_oferta_max", "input_garantia", 
+                   "input_venta_vivienda", "input_mejoras", "cant_mes"]
         for i in ids_num: document.getElementById(i).value = "0"
         
+        # Reset Costos Default
         document.getElementById("costo_abogado").value = str(DEF_ABOGADO)
         document.getElementById("costo_notaria").value = str(DEF_NOTARIA)
         document.getElementById("costo_cbr").value = str(DEF_CBR)
@@ -588,8 +649,12 @@
         document.getElementById("costo_legal_venta").value = str(DEF_LEGAL_VENTA)
         document.getElementById("input_mejoras").value = "3000000"
         
+        # Reset Macal
         document.getElementById("radio_normal").checked = True
         document.getElementById("macal_cbr_editable").value = "250000"
+        document.getElementById("input_valor_uf_dia").value = "38000"
+        document.getElementById("input_postura_min_uf").value = ""
+
         document.getElementById("input_fecha_remate").value = ""
         document.getElementById("input_fecha_rescate").value = ""
         document.getElementById("select_region").selectedIndex = 0
@@ -607,8 +672,11 @@
         document.getElementById("breakdown_gastos").innerHTML = ""
         document.getElementById("breakdown_ingresos").innerHTML = ""
         document.getElementById("resultado_ai").style.display = "none"
+        
+        # --- CORRECCIÓN AQUÍ ---
         document.getElementById("input_imagen").value = ""
-        document.getElementById("preview-img").src = ""
+        # Antes buscábamos "preview-img" que ya no existe. Ahora limpiamos el contenedor:
+        document.getElementById("preview-container").innerHTML = "" 
         document.getElementById("preview-container").style.display = "none"
         document.querySelector(".btn-file").innerText = "📷 Toca para subir foto"
 
@@ -628,13 +696,18 @@
         return f'<div class="breakdown-title">{titulo}</div>'
 
     def calcular_escritura_macal(precio_adj):
+        # Usamos el valor dinámico
+        valor_uf_dia = obtener_valor_uf_actual()
+        
+        # Tramos UF
         if precio_adj <= 9999999: uf = 16
         elif precio_adj <= 49999999: uf = 26
         elif precio_adj <= 69999999: uf = 32
         elif precio_adj <= 99999999: uf = 33
         elif precio_adj <= 149999999: uf = 37
         else: uf = 42
-        return uf, (uf * VALOR_UF) * 1.19
+        
+        return uf, (uf * valor_uf_dia) * 1.19
 
     def calcular_y_mostrar_final(e):
         global MACAL_COSTO_ESCRITURA, MACAL_COSTO_COMISION, MACAL_COSTO_NOTARIA, MACAL_COSTO_CBR, MACAL_COSTO_BUSQUEDA, UF_COBRO_LABEL
@@ -754,21 +827,62 @@
 
     # --- PDF GENERATOR (OPTIMIZADO) ---
 def crear_pdf_objeto():
+        # 1. Asegurar cálculos actualizados
         calcular_y_mostrar_final(None)
+        
+        # 2. Capturar Datos Básicos
         nombre = document.getElementById("input_nombre").value
         str_remate = document.getElementById("input_fecha_remate").value
         str_link = document.getElementById("input_link").value or "No especificado"
-        ingresos = document.getElementById("res_total_ingresos").innerText
-        egresos = document.getElementById("res_subtotal_gastos").innerText
-        utilidad = document.getElementById("res_saldo_final_liquido").innerText
+        notas = document.getElementById("input_detalles").value or "Sin observaciones registradas."
         
+        # 3. Capturar Valores Numéricos para el Desglose (Recalculamos variables locales para listarlas)
+        postura_min = get_val("input_postura_min")
+        oferta_max = get_val("input_oferta_max")
+        garantia = get_val("input_garantia")
+        venta_vivienda = get_val("input_venta_vivienda")
+        mejoras = get_val("input_mejoras")
+        alzamientos = get_val("costo_alzamientos")
+        legal_venta = get_val("costo_legal_venta")
+        meses = get_val("cant_mes")
+        
+        precio_adjudicacion = oferta_max if oferta_max > 0 else postura_min
+        comision_venta = venta_vivienda * 0.02
+        iva_venta = (venta_vivienda / 1.19) * 0.19
+        
+        # Definir variables de costos según el modo
+        if MODO_ACTUAL == "MACAL":
+            c_comision_compra = MACAL_COSTO_COMISION
+            c_escritura = MACAL_COSTO_ESCRITURA
+            c_notaria = MACAL_COSTO_NOTARIA
+            c_cbr = MACAL_COSTO_CBR
+            c_busqueda = MACAL_COSTO_BUSQUEDA
+            c_abogado = 0
+            c_judiciales = 0
+        else:
+            c_comision_compra = 0
+            c_escritura = 0
+            c_notaria = get_val("costo_notaria")
+            c_cbr = get_val("costo_cbr")
+            c_busqueda = (postura_min + oferta_max) * 0.02
+            c_abogado = get_val("costo_abogado")
+            c_judiciales = get_val("costo_judiciales")
+
+        # Calcular intereses para el desglose
+        gastos_ops = c_abogado + c_notaria + c_cbr + c_judiciales + c_busqueda + alzamientos + c_comision_compra + c_escritura
+        base_int = gastos_ops + garantia + precio_adjudicacion + mejoras + comision_venta + legal_venta + iva_venta
+        interes_total = (base_int * 0.007) * meses
+
+        # Totales Finales (Texto formateado)
+        str_ingresos = document.getElementById("res_total_ingresos").innerText
+        str_egresos = document.getElementById("res_subtotal_gastos").innerText
+        str_utilidad = document.getElementById("res_saldo_final_liquido").innerText
+
+        # --- INICIO GENERACIÓN PDF ---
         doc = window.jspdf.jsPDF.new()
         
-        # --- NUEVA LÓGICA DE IMÁGENES MÚLTIPLES ---
-        # Buscamos todas las imágenes por la clase que definimos en CSS
+        # 1. IMAGEN PRINCIPAL (HEADER)
         imgs_collection = document.getElementsByClassName("img-thumbnail")
-        
-        # 1. IMAGEN PRINCIPAL (HEADER) - Toma la primera foto (índice 0)
         if imgs_collection.length > 0:
             main_img = imgs_collection[0]
             if main_img.src and "data:image" in main_img.src:
@@ -778,72 +892,134 @@ def crear_pdf_objeto():
                     ratio = orig_w / orig_h
                     if ratio > 1: final_w = max_w; final_h = max_w / ratio
                     else: final_h = max_h; final_w = max_h * ratio
-                    
                     img_format = "PNG" if "png" in main_img.src else "JPEG"
                     doc.addImage(main_img.src, img_format, 140, 10, final_w, final_h)
                 except: pass 
 
-        # --- TEXTOS DEL REPORTE (Igual que antes) ---
-        doc.setFont("helvetica", "bold"); doc.setFontSize(22)
-        if MODO_ACTUAL == "MACAL":
-            doc.setTextColor(0, 59, 115)
-            doc.text("FICHA EVALUACIÓN MACAL", 20, 25)
-        else:
-            doc.text("FICHA EVALUACIÓN REMATE", 20, 25)
-            
-        doc.setTextColor(0, 0, 0); doc.setFontSize(12)
-        doc.text(f"Oportunidad: {nombre}", 20, 40)
-        doc.text(f"Fecha Remate: {str_remate}", 20, 48)
+        # 2. ENCABEZADO Y DATOS
+        doc.setFont("helvetica", "bold"); doc.setFontSize(18)
+        titulo = "FICHA EVALUACIÓN MACAL" if MODO_ACTUAL == "MACAL" else "FICHA EVALUACIÓN REMATE"
+        doc.setTextColor(0, 59, 115)
+        doc.text(titulo, 20, 25)
+        
+        doc.setFontSize(11); doc.setTextColor(0, 0, 0)
+        doc.text(f"Oportunidad: {nombre}", 20, 35)
+        doc.text(f"Fecha Remate: {str_remate}", 20, 42)
         doc.setFontSize(9); doc.setTextColor(0, 59, 115)
-        doc.text(f"Link: {str_link}", 20, 54)
-        doc.setDrawColor(156, 191, 40)
-        doc.line(20, 60, 190, 60)
-        doc.setFontSize(14); doc.text("Resumen Financiero", 20, 70)
-        doc.setFontSize(11)
-        doc.text(f"Total Ingresos: {ingresos}", 20, 80)
-        doc.text(f"Total Egresos: {egresos}", 20, 88)
-        doc.setFontSize(10); doc.setTextColor(100, 100, 100)
-        y_det = 95
-        if MODO_ACTUAL == "MACAL":
-             doc.text(f"- Comisión Macal: {format_money(MACAL_COSTO_COMISION)}", 20, y_det); y_det+=5
-             doc.text(f"- Servicio Postventa: {format_money(MACAL_COSTO_ESCRITURA)}", 20, y_det); y_det+=5
-             doc.text(f"- Notaría + CBR: {format_money(MACAL_COSTO_NOTARIA + MACAL_COSTO_CBR)}", 20, y_det); y_det+=10
-        doc.setFontSize(16); doc.setTextColor(0, 100, 0)
-        doc.text(f"UTILIDAD NETA: {utilidad}", 20, y_det+10)
+        doc.text(f"Link: {str_link}", 20, 49)
+        
+        # Cursor Y dinámico
+        y = 60
+        
+        # 3. NOTAS / ESTADO (Con ajuste de texto automático)
+        doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(0, 0, 0)
+        doc.text("NOTAS / ESTADO:", 20, y)
+        y += 6
+        
+        doc.setFont("helvetica", "normal")
+        # splitTextToSize divide el texto largo en varias líneas para que quepa en 170 unidades de ancho
+        lines_notas = doc.splitTextToSize(notas, 170)
+        doc.text(lines_notas, 20, y)
+        
+        # Bajamos el cursor según cuantas lineas ocupó la nota
+        y += (len(lines_notas) * 5) + 5
+        
+        # Línea separadora
+        doc.setDrawColor(200, 200, 200)
+        doc.line(20, y, 190, y)
+        y += 10
 
-        # 2. GALERÍA DE FOTOS ADICIONALES (NUEVA PÁGINA)
-        # Si hay más de 1 foto, creamos página nueva
+        # 4. DESGLOSE TIPO BOLETA
+        doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(0, 59, 115)
+        doc.text("DESGLOSE FINANCIERO DETALLADO", 20, y)
+        y += 10
+        
+        doc.setFontSize(10); doc.setTextColor(50, 50, 50)
+        
+        # Función auxiliar para imprimir filas de la boleta
+        def print_row(label, val, bold=False):
+            nonlocal y
+            # Si se acaba la hoja, crear nueva
+            if y > 270: 
+                doc.addPage(); y = 20
+            
+            if bold: doc.setFont("helvetica", "bold")
+            else: doc.setFont("helvetica", "normal")
+            
+            doc.text(label, 20, y)
+            doc.text(format_money(val), 180, y, align="right")
+            y += 6
+
+        # --- SECCIÓN A: ADQUISICIÓN ---
+        doc.setFont("helvetica", "bold"); doc.text("1. ADQUISICIÓN", 20, y); y += 6
+        print_row("Precio Adjudicación", precio_adjudicacion)
+        print_row("Garantía (Reembolsable)", garantia)
+        y += 2
+        
+        # --- SECCIÓN B: GASTOS OPERACIONALES ---
+        doc.setFont("helvetica", "bold"); doc.text("2. GASTOS OPERACIONALES", 20, y); y += 6
+        if MODO_ACTUAL == "MACAL":
+            print_row("Comisión Macal", c_comision_compra)
+            print_row(f"Escrituración ({UF_COBRO_LABEL})", c_escritura)
+            print_row("Notaría", c_notaria)
+            print_row("CBR", c_cbr)
+            print_row("Búsqueda", c_busqueda)
+        else:
+            print_row("Abogado", c_abogado)
+            print_row("Notaría", c_notaria)
+            print_row("CBR", c_cbr)
+            print_row("Judiciales", c_judiciales)
+            print_row("Búsqueda", c_busqueda)
+        print_row("Alzamientos", alzamientos)
+        y += 2
+        
+        # --- SECCIÓN C: HABILITACIÓN Y VENTA ---
+        doc.setFont("helvetica", "bold"); doc.text("3. HABILITACIÓN Y VENTA", 20, y); y += 6
+        print_row("Mejoras / Reformas", mejoras)
+        print_row("Comisión Venta (2%)", comision_venta)
+        print_row("IVA Débito Venta", iva_venta)
+        print_row("Legal Venta", legal_venta)
+        y += 2
+        
+        # --- SECCIÓN D: COSTO FINANCIERO ---
+        doc.setFont("helvetica", "bold"); doc.text("4. COSTO FINANCIERO", 20, y); y += 6
+        print_row(f"Intereses ({int(meses)} meses)", interes_total)
+        y += 5
+        
+        # 5. TOTALES FINALES
+        doc.setDrawColor(0, 0, 0)
+        doc.line(20, y, 190, y)
+        y += 8
+        
+        doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(0, 0, 0)
+        doc.text("TOTAL INGRESOS", 20, y)
+        doc.text(str_ingresos, 180, y, align="right")
+        y += 6
+        
+        doc.setTextColor(192, 57, 43) # Rojo para egresos
+        doc.text("TOTAL EGRESOS", 20, y)
+        doc.text(str_egresos, 180, y, align="right")
+        y += 10
+        
+        doc.setFontSize(14); doc.setTextColor(0, 100, 0) # Verde utilidad
+        doc.text(f"UTILIDAD NETA: {str_utilidad}", 20, y)
+
+        # 6. GALERÍA DE FOTOS ADICIONALES (Tu código existente)
         if imgs_collection.length > 1:
             doc.addPage()
-            doc.setTextColor(0, 59, 115)
-            doc.setFontSize(16)
+            doc.setTextColor(0, 59, 115); doc.setFontSize(16)
             doc.text("Anexo: Galería Fotográfica", 20, 20)
+            x_pos = 20; y_pos = 30; w_img = 80; h_img = 60
             
-            # Configuración de grilla (2 columnas)
-            x_pos = 20
-            y_pos = 30
-            w_img = 80
-            h_img = 60
-            
-            # Iteramos desde la segunda imagen (índice 1) en adelante
             for i in range(1, imgs_collection.length):
                 img = imgs_collection[i]
                 if img.src and "data:image" in img.src:
                     try:
                         format_gal = "PNG" if "png" in img.src else "JPEG"
                         doc.addImage(img.src, format_gal, x_pos, y_pos, w_img, h_img)
-                        
-                        # Mover cursor para la siguiente foto
-                        if x_pos == 20:
-                            x_pos = 110 # Mover a columna derecha
-                        else:
-                            x_pos = 20  # Volver a columna izquierda
-                            y_pos += 70 # Bajar una fila
-                        
-                        # Si se acaba la hoja, crear otra
-                        if y_pos > 230:
-                            doc.addPage()
-                            y_pos = 20
+                        if x_pos == 20: x_pos = 110
+                        else: x_pos = 20; y_pos += 70
+                        if y_pos > 230: doc.addPage(); y_pos = 20
                     except: pass
 
         return doc, nombre
@@ -1044,6 +1220,42 @@ def crear_pdf_objeto():
         });
         window.scrollTo(0, 0);
     }
+</script>
+
+<script>
+    // --- AUTO-ACTUALIZADOR DE UF ---
+    async function cargarUFDelDia() {
+        const inputUF = document.getElementById("input_valor_uf_dia");
+        
+        // Cambiamos el texto temporalmente para que sepas que está pensando
+        inputUF.placeholder = "Cargando...";
+        
+        try {
+            // 1. Conectar con la API de indicadores económicos de Chile
+            const respuesta = await fetch('https://mindicador.cl/api/uf');
+            
+            if (!respuesta.ok) throw new Error("No se pudo conectar con la API");
+            
+            const datos = await respuesta.json();
+            
+            // 2. Extraer el valor de hoy (viene en la primera posición de la serie)
+            const valorReal = datos.serie[0].valor;
+            
+            // 3. Poner el valor en la cajita (Redondeamos para facilitar cálculos matemáticos)
+            // Si prefieres decimales exactos, quita el Math.round
+            inputUF.value = Math.round(valorReal); 
+            
+            console.log("✅ UF Actualizada desde internet: $" + valorReal);
+
+        } catch (error) {
+            console.error("⚠️ Error obteniendo UF:", error);
+            // Si falla (ej: sin internet), se queda con el 38000 que pusimos por defecto en el HTML
+            inputUF.value = "38000"; 
+        }
+    }
+
+    // Ejecutar esta función apenas cargue la página
+    window.addEventListener('load', cargarUFDelDia);
 </script>
 
 </body>
