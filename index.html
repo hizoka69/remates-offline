@@ -393,13 +393,17 @@
                 </div>
             </div>
         </div>
-        <div class="result-box" style="background-color: #e3f2fd; border-color: #90caf9; margin-bottom: 15px;">
-        <label style="color: var(--dosh-blue);">📧 Enviar copia por correo (Opcional)</label>
-        <input type="email" id="input_email_cliente" placeholder="nombre@cliente.com" style="margin-top: 5px;">
-        <p class="small-note">Ingresa un correo si quieres que la ficha se envíe automáticamente.</p>
-    </div>
 
-        <button class="btn-pdf" py-click="generar_pdf_completo">📥 Descargar Ficha PDF Detallada</button>
+        <div class="result-box" style="background-color: #e3f2fd; border-color: #90caf9; margin-bottom: 15px;">
+            <label style="color: var(--dosh-blue);">📧 Enviar copia por correo</label>
+            <div style="display: flex; gap: 10px; margin-top: 5px;">
+                <input type="email" id="input_email_cliente" placeholder="cliente@email.com" style="flex: 1; padding: 10px;">
+                <button py-click="solo_enviar_correo" style="flex: 0.3; background: var(--dosh-blue); color: white; border-radius: 8px; font-size: 1.2rem; padding: 0;">📤</button>
+            </div>
+            <p class="small-note">Toca el botón 📤 para enviar sin descargar.</p>
+        </div>
+
+        <button class="btn-pdf" py-click="generar_pdf_completo">📥 Descargar PDF (Guardar)</button>
         <button class="btn-new" py-click="nueva_operacion">🔄 Nueva Operación / Menú</button>
         <div id="mensaje"></div>
         <div class="nav-buttons">
@@ -723,8 +727,8 @@
         document.getElementById("breakdown_ingresos").innerHTML = html_ingresos
         cambiar_slide("slide_final")
 
-    # --- PDF GENERATOR ---
-    def generar_pdf_completo(e):
+    # --- PDF GENERATOR (OPTIMIZADO) ---
+    def crear_pdf_objeto():
         calcular_y_mostrar_final(None)
         nombre = document.getElementById("input_nombre").value
         str_remate = document.getElementById("input_fecha_remate").value
@@ -773,10 +777,19 @@
         doc.setFontSize(16); doc.setTextColor(0, 100, 0)
         doc.text(f"UTILIDAD NETA: {utilidad}", 20, y_det+10)
 
+        return doc, nombre
+
+    def generar_pdf_completo(e):
+        doc, nombre = crear_pdf_objeto()
         pdf_base64 = doc.output('datauristring')
-        window.enviarPDFAlBackend(pdf_base64, nombre)
+        window.enviarPDFAlBackend(pdf_base64, nombre, False)
         doc.save(f"Ficha_{nombre}.pdf")
-        document.getElementById("mensaje").innerText = "✅ PDF Generado"
+        document.getElementById("mensaje").innerText = "✅ PDF Descargado"
+
+    def solo_enviar_correo(e):
+        doc, nombre = crear_pdf_objeto()
+        pdf_base64 = doc.output('datauristring')
+        window.enviarPDFAlBackend(pdf_base64, nombre, True)
 
     iniciar_app()
 </script>
@@ -798,23 +811,107 @@
         const esMacal = macalDiv && macalDiv.style.display !== 'none';
         const contextoExtra = esMacal ? "Considera que es un Remate Macal: Comisión 3%+IVA y gastos operacionales fijos en UF." : "Es un remate judicial tradicional.";
 
-        const prompt = `Actúa como un Senior Real Estate Investment Analyst... [PROMPT COMPLETO AQUÍ]`;
-        
-        // (Resumido para brevedad, pero en tu código debe ir completo)
-        // ... Lógica fetch a /api/analizar ...
+        const prompt = `
+            Actúa como un Senior Real Estate Investment Analyst (Analista de Inversiones Inmobiliarias Senior). 
+            Tu trabajo es proteger mi capital. Sé crítico, escéptico y directo.
+            
+            CONTEXTO DEL NEGOCIO:
+            ${contextoExtra}
+            Link Referencia: ${link}
+            
+            DATOS FINANCIEROS:
+            - Oportunidad: ${nombre}
+            - Inversión Total: ${totalGastos}
+            - Venta Proyectada: ${totalIngresos}
+            - Presupuesto Mejoras: $${mejoras}
+            - Utilidad Neta: ${utilidad}
+            - ROI: ${roi}
+            - Rentabilidad s/Venta: ${rentabilidad}
+            
+            NOTAS DEL TERRENO/ESTADO:
+            "${notas}"
+
+            TU TAREA (Responde en este formato exacto con HTML simple):
+
+            1. 🛡️ ANÁLISIS DE RIESGO (0-10):
+               - Califica el riesgo.
+               - Si dice "Ocupada", advierte sobre desalojo.
+
+            2. 📉 STRESS TEST:
+               - ¿Gano dinero si vendo 10% más barato?
+               - ¿Presupuesto mejoras realista?
+
+            3. 💡 VEREDICTO:
+               - ¿APRUEBAS o RECHAZAS?
+               - 1 razón técnica.
+
+            4. 🚀 ACCIONES:
+               - 2 cosas a investigar YA.
+
+            CONCLUSION BREVE.
+            - Despídete: "Programa desarrollado por Hizoka."
+        `;
+
+        document.getElementById('loading_ai').style.display = 'block';
+        document.getElementById('resultado_ai').style.display = 'none';
+
+        try {
+            const response = await fetch('/api/analizar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: prompt })
+            });
+
+            if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
+
+            const data = await response.json();
+            
+            if (data.result) {
+                mostrarResultado(data.result);
+            } else {
+                throw new Error("La IA no devolvió resultados.");
+            }
+
+        } catch (error) {
+            console.error("Error IA:", error);
+            const respuestaError = `
+            <strong>⚠️ ERROR DE CONEXIÓN</strong><br>
+            No se pudo contactar a la IA.<br>
+            Verifica tu API Key en Vercel o tu conexión a internet.<br><br>
+            <em>Programa desarrollado por Hizoka.</em>
+            `;
+            mostrarResultado(respuestaError);
+        }
+    }
+
+    function mostrarResultado(textoHTML) {
+        const resultDiv = document.getElementById('resultado_ai');
+        let formatted = textoHTML
+            .replace(/\n/g, '<br>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/🛡️/g, '<span style="font-size:1.2em">🛡️</span>')
+            .replace(/📉/g, '<span style="font-size:1.2em">📉</span>')
+            .replace(/💡/g, '<span style="font-size:1.2em">💡</span>');
+            
+        resultDiv.innerHTML = formatted;
+        resultDiv.style.display = 'block';
+        resultDiv.style.borderLeft = "5px solid #9CBF28"; 
+        document.getElementById('loading_ai').style.display = 'none';
     }
 
     // 4.2 Función de Envío de Correo
-    async function enviarPDFAlBackend(pdfDataUri, nombreArchivo) {
+    async function enviarPDFAlBackend(pdfDataUri, nombreArchivo, forzarAlerta) {
         const mensajeDiv = document.getElementById("mensaje");
-        
-        // 1. Capturamos el correo que escribió el usuario
         const emailUsuario = document.getElementById("input_email_cliente").value;
 
-        // 2. Si el usuario NO escribió nada, solo descargamos (no enviamos correo)
         if (!emailUsuario) {
-            mensajeDiv.innerText = "✅ PDF Generado (Sin envío de correo)";
-            return; // Salimos de la función aquí
+            if (forzarAlerta) {
+                alert("⚠️ Por favor escribe un correo primero.");
+                mensajeDiv.innerText = "❌ Falta correo de destino.";
+            } else {
+                console.log("Descarga local sin envío de correo.");
+            }
+            return;
         }
 
         mensajeDiv.innerText = "⏳ Enviando correo a " + emailUsuario + "...";
@@ -826,14 +923,14 @@
                 body: JSON.stringify({
                     pdfBase64: pdfDataUri,
                     nombreArchivo: nombreArchivo,
-                    destinatario: emailUsuario // <--- AQUÍ USAMOS EL INPUT DEL USUARIO
+                    destinatario: emailUsuario
                 })
             });
 
             if (response.ok) {
-                mensajeDiv.innerText = "✅ PDF Descargado y enviado exitosamente.";
+                mensajeDiv.innerText = "✅ Correo enviado exitosamente.";
             } else {
-                mensajeDiv.innerText = "⚠️ PDF Descargado, pero hubo error enviando el correo.";
+                mensajeDiv.innerText = "⚠️ Error enviando el correo.";
                 console.error("Error envío:", await response.text());
             }
         } catch (e) {
@@ -841,14 +938,12 @@
             mensajeDiv.innerText = "⚠️ Error de conexión al enviar correo.";
         }
     }
-    
-    // 4.3 MANEJO DE HISTORIAL (LA SOLUCIÓN AL ERROR)
-    // Esta función recibe solo un string (texto) desde Python, evitando el error de objeto
+
+    // 4.3 MANEJO DE HISTORIAL
     window.actualizarHistorial = function(id_mostrar) {
         window.history.pushState({slide: id_mostrar}, "", "#" + id_mostrar);
     }
 
-    // Escuchar el botón "Atrás" del navegador/celular/ratón
     window.onpopstate = function(event) {
         if (event.state && event.state.slide) {
             mostrarSlideVisual(event.state.slide);
