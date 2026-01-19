@@ -31,6 +31,19 @@
         h2 { font-size: 1.1rem; color: var(--dosh-blue); border-bottom: 2px solid var(--dosh-green); padding-bottom: 8px; margin-top: 5px; margin-bottom: 20px; display: inline-block; width: 100%; }
         .row { display: flex; gap: 15px; margin-bottom: 15px; }
         .col { flex: 1; }
+
+                /* Pantalla de carga */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s;
+        }
+        .spinner {
+            border: 5px solid #f3f3f3; border-top: 5px solid var(--dosh-blue);
+            border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         /* RESPONSIVIDAD MEJORADA */
         @media (max-width: 600px) { 
@@ -138,6 +151,12 @@
     </script>
 </head>
 <body>
+
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <h3 style="color: var(--dosh-blue); margin-top: 20px;">Cargando Sistema...</h3>
+    <p style="color: #666; font-size: 0.9rem;">Configurando entorno Python</p>
+</div>
 
 <div class="container">
     <h1>Gestor De Remates</h1>
@@ -509,6 +528,7 @@
             opt.text = reg
             opt.value = reg
             select.add(opt)
+        document.getElementById("loading-overlay").style.display = "none"    
 
     def actualizar_comunas(event):
         reg = event.target.value
@@ -526,6 +546,9 @@
         
         subt = document.getElementById("main_subtitle")
         sec_ia = document.getElementById("sec_ia")
+
+
+        window.history.pushState({"slide": id_mostrar}, "", f"#{id_mostrar}")
         
         if id_mostrar == "slide_selection":
              subt.innerText = "Selecciona el tipo de evaluación"
@@ -1060,7 +1083,43 @@
 </script>
 
 
+<script>
+    // Manejar el botón "Atrás" del navegador y del ratón
+    window.onpopstate = function(event) {
+        if (event.state && event.state.slide) {
+            // Llamamos a una función auxiliar para cambiar solo visualmente
+            mostrarSlideVisual(event.state.slide);
+        } else {
+            // Si no hay estado (ej: volviste al inicio), mostramos la selección
+            mostrarSlideVisual("slide_selection");
+        }
+    };
 
+    function mostrarSlideVisual(id_mostrar) {
+        // Lógica visual simple (copia de lo que hace Python pero en JS para rapidez)
+        const ids = ["slide_selection", "slide1", "slide2", "slide3", "slide_final"];
+        const subt = document.getElementById("main_subtitle");
+        const sec_ia = document.getElementById("sec_ia");
+
+        if (id_mostrar === "slide_selection") {
+             subt.innerText = "Selecciona el tipo de evaluación";
+             sec_ia.style.display = "none";
+        } else if (id_mostrar === "slide_final") {
+             subt.innerText = "Resumen de Resultados";
+             sec_ia.style.display = "block";
+        } else {
+             subt.innerText = "Evaluación Económica de Remates";
+             sec_ia.style.display = "none";
+        }
+
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (id === id_mostrar) el.classList.add("active");
+            else el.classList.remove("active");
+        });
+        window.scrollTo(0, 0);
+    }
+</script>
 
 </body>
 </html>
