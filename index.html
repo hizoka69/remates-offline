@@ -165,6 +165,93 @@
         .watermark-dev { text-align: center; padding: 20px 0; margin-top: 30px; opacity: 0.8; width: 100%; }
         .watermark-dev img { max-height: 90px; width: auto; transition: opacity 0.3s; }
         .watermark-dev img:hover { opacity: 1; }
+
+
+
+        /* --- ESTILOS SIDEBAR IA --- */
+        .ia-sidebar {
+            position: fixed;
+            top: 20px;
+            right: -400px; /* Oculto inicialmente a la derecha */
+            width: 350px;
+            height: 90vh;
+            background-color: #f0f7ff;
+            border-left: 5px solid #4285f4;
+            border-radius: 20px 0 0 20px; /* Bordes redondeados solo a la izquierda */
+            box-shadow: -5px 0 20px rgba(0,0,0,0.15);
+            transition: right 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efecto rebote suave */
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .ia-sidebar.open {
+            right: 0; /* Mostrar */
+        }
+
+        .ia-header {
+            padding: 15px;
+            background: #4285f4;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .ia-header h3 { margin: 0; font-size: 1.1rem; color: white; border: none; }
+        
+        .btn-close {
+            background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 0; margin: 0; width: auto; box-shadow: none;
+        }
+
+        .ia-content {
+            padding: 20px;
+            overflow-y: auto; /* Scroll si el texto es muy largo */
+            flex-grow: 1;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #333;
+        }
+
+        .ia-actions {
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .btn-action-add {
+            background-color: var(--dosh-green); 
+            color: white; 
+            padding: 10px; 
+            width: 100%; 
+            border-radius: 8px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .btn-action-add.added {
+            background-color: #ccc;
+            cursor: default;
+        }
+
+        /* Ajuste para móviles: En pantallas chicas, ocupa todo el ancho abajo */
+        @media (max-width: 900px) {
+            .ia-sidebar {
+                width: 100%;
+                height: 50vh;
+                top: auto;
+                bottom: -60vh;
+                right: 0;
+                border-radius: 20px 20px 0 0;
+                border-left: none;
+                border-top: 5px solid #4285f4;
+                transition: bottom 0.5s ease;
+            }
+            .ia-sidebar.open {
+                bottom: 0;
+                right: 0;
+            }
+        }
     </style>
     
 <script>
@@ -508,19 +595,38 @@
         </div>
     </div>
     
-    <div id="sec_ia" style="margin-top: 30px; border-top: 2px dashed #ccc; padding-top: 20px; display: none;">
-        <h2>🤖 Asesoría con IA (Groq)</h2>
-        <button onclick="consultarGroq()" style="background: linear-gradient(45deg, #4285f4, #9b72cb); color: white; width: 100%;">
-             Analizar Oportunidad con IA
-        </button>
-        <div id="loading_ai" style="display:none; text-align: center; margin-top: 15px;">
-            <p>🧠 Cargando...</p>
-            <p>Porfavor espere</p>
+<div id="sec_ia" style="margin-top: 20px; margin-bottom: 20px;">
+            <button onclick="consultarGroq()" 
+                    style="background: linear-gradient(45deg, #4285f4, #9b72cb); color: white; width: 100%; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); position: relative; z-index: 10;">
+                 🤖 Analizar Oportunidad con IA
+            </button>
+            
+            <div id="loading_ai" style="display:none; text-align: center; margin-top: 10px;">
+                <span style="font-size: 0.9rem; color: #666;">🧠 Pensando...</span>
+            </div>
         </div>
-        <div id="resultado_ai" style="margin-top: 15px; background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #ddd; display: none; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.5;"></div>
+
+        ```
+
+**B. Agrega este bloque HTML nuevo justo ANTES de cerrar el `</body>` (al final del archivo, fuera del div `container`):**
+
+```html
+<div id="ia_sidebar" class="ia-sidebar">
+    <div class="ia-header">
+        <h3>🤖 Análisis IA</h3>
+        <button onclick="cerrarSidebar()" class="btn-close">×</button>
+    </div>
+    
+    <div id="ia_content" class="ia-content">
+        </div>
+
+    <div class="ia-actions" id="ia_actions" style="display: none;">
+        <p style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">¿Te sirvió este análisis?</p>
+        <button onclick="agregarAlPDF()" id="btn_add_pdf" class="btn-action-add">
+            ➕ Agregar al PDF
+        </button>
     </div>
 </div>
-
 <div class="watermark-dev">
     <img src="hzz.png" alt="Desarrollado por Joaquín Hernández">
 </div>
@@ -1024,24 +1130,29 @@ def crear_pdf_objeto():
         doc.setFontSize(14); doc.setTextColor(0, 100, 0)
         doc.text(f"UTILIDAD NETA: {str_utilidad}", 20, y)
 
-        # 5. ANEXO IA (NUEVO BLOQUE)
-        # Capturamos el texto visible del div resultado_ai
-        texto_ia_html = document.getElementById("resultado_ai").innerText
         
-        # Solo imprimimos si la IA dijo algo (más de 10 letras)
-        if len(texto_ia_html) > 10:
+        # 5. ANEXO IA (CONDICIONAL)
+        # Verificamos la variable global de JS
+        incluir_ia = window.incluirIAPdf
+        
+        # También verificamos que haya texto
+        texto_ia_html = document.getElementById("ia_content").innerText
+        
+        if incluir_ia and len(texto_ia_html) > 10:
             doc.addPage()
             
             # Título IA
-            doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.setTextColor(66, 133, 244) # Azul IA
+            doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.setTextColor(66, 133, 244)
             doc.text("Análisis de Inteligencia Artificial", 20, 20)
             
             # Contenido IA
             doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(50, 50, 50)
-            
-            # splitTextToSize corta el texto para que quepa en el ancho de la hoja
             lines_ia = doc.splitTextToSize(texto_ia_html, 170)
             doc.text(lines_ia, 20, 35)
+            
+            # Nota al pie
+            doc.setFontSize(8); doc.setTextColor(150, 150, 150)
+            doc.text("* Este análisis fue generado por IA y validado por el usuario.", 20, 280)
 
         # 6. GALERÍA DE FOTOS
         if imgs_collection.length > 1:
@@ -1080,7 +1191,11 @@ def crear_pdf_objeto():
 
 <script>
     // 4.1 Función de IA (Groq)
+// Variable global para saber si incluimos la IA en el PDF
+    window.incluirIAPdf = false;
+
     async function consultarGroq() {
+        // ... (Recolección de datos igual que antes) ...
         const nombre = document.getElementById('input_nombre').value || "Propiedad Ejemplo";
         const totalGastos = document.getElementById('res_subtotal_gastos').innerText;
         const totalIngresos = document.getElementById('res_total_ingresos').innerText;
@@ -1093,54 +1208,34 @@ def crear_pdf_objeto():
         
         const macalDiv = document.getElementById('macal_options');
         const esMacal = macalDiv && macalDiv.style.display !== 'none';
-        const contextoExtra = esMacal ? "Considera que es un Remate Macal: Comisión 3%+IVA y gastos operacionales fijos en UF." : "Es un remate judicial tradicional.";
+        const contextoExtra = esMacal ? "Considera que es un Remate Macal." : "Es un remate judicial tradicional.";
 
         const prompt = `
-            Actúa como un Senior Real Estate Investment Analyst (Analista de Inversiones Inmobiliarias Senior). 
-            Tu trabajo es proteger mi capital. Sé crítico, escéptico y directo.
+            Actúa como un Senior Real Estate Investment Analyst.
+            CONTEXTO: ${contextoExtra}. Link: ${link}.
+            DATOS: Oportunidad: ${nombre}, 
+            Inversión: ${totalGastos},
+             Venta: ${totalIngresos}, 
+             Mejoras: ${mejoras}, 
+             Utilidad: ${utilidad},
+              ROI: ${roi},
+             Rentabilidad: ${rentabilidad}.
+
+            NOTAS: "${notas}"
             
-            CONTEXTO DEL NEGOCIO:
-            ${contextoExtra}
-            Link Referencia: ${link}
+            TU TAREA (HTML simple, sin markdown):
+            1. 🛡️ ANÁLISIS DE RIESGO (0-10) y justificación breve.
+            2. 📉 STRESS TEST: ¿Aguanta venta -10%?
+            3. 💡 VEREDICTO: APRUEBAS o RECHAZAS y por qué.
+            4. 🚀 2 ACCIONES INMEDIATAS.
+            CONCLUSIÓN BREVE. 
             
-            DATOS FINANCIEROS:
-            - Oportunidad: ${nombre}
-            - Inversión Total: ${totalGastos}
-            - Venta Proyectada: ${totalIngresos}
-            - Presupuesto Mejoras: $${mejoras}
-            - Utilidad Neta: ${utilidad}
-            - ROI: ${roi}
-            - Rentabilidad s/Venta: ${rentabilidad}
             
-            NOTAS DEL TERRENO/ESTADO:
-            "${notas}"
-
-            TU TAREA (Responde en este formato exacto con HTML simple):
-
-            1.  ANÁLISIS DE RIESGO (0-10):
-               - Califica el riesgo.
-               - Si dice "Ocupada", advierte sobre desalojo.
-
-            2.  STRESS TEST:
-               - ¿Gano dinero si vendo 10% más barato?
-               - ¿Presupuesto mejoras realista?
-
-            3.  VEREDICTO:
-               - ¿APRUEBAS o RECHAZAS?
-               - 1 razón técnica.
-
-            4.  ACCIONES:
-               - 2 cosas a investigar YA.
-
-            CONCLUSION BREVE.
-
-
-            - Despídete: "Programa desarrollado por Hizoka."
+            Firma: "Programa desarrollado por Hizoka."
         `;
 
         document.getElementById('loading_ai').style.display = 'block';
-        document.getElementById('resultado_ai').style.display = 'none';
-
+        
         try {
             const response = await fetch('/api/analizar', {
                 method: 'POST',
@@ -1148,41 +1243,55 @@ def crear_pdf_objeto():
                 body: JSON.stringify({ prompt: prompt })
             });
 
-            if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
-
+            if (!response.ok) throw new Error(`Error API: ${response.status}`);
             const data = await response.json();
             
             if (data.result) {
-                mostrarResultado(data.result);
-            } else {
-                throw new Error("La IA no devolvió resultados.");
+                mostrarResultadoEnSidebar(data.result);
             }
 
         } catch (error) {
-            console.error("Error IA:", error);
-            const respuestaError = `
-            <strong>⚠️ ERROR DE CONEXIÓN</strong><br>
-            No se pudo contactar a la IA.<br>
-            Verifica tu API Key en Vercel o tu conexión a internet.<br><br>
-            <em>Programa desarrollado por Hizoka.</em>
-            `;
-            mostrarResultado(respuestaError);
+            console.error(error);
+            mostrarResultadoEnSidebar("⚠️ Error de conexión con la IA. Intenta de nuevo.");
         }
     }
 
-    function mostrarResultado(textoHTML) {
-        const resultDiv = document.getElementById('resultado_ai');
+    function mostrarResultadoEnSidebar(textoHTML) {
+        document.getElementById('loading_ai').style.display = 'none';
+        
+        // Formateo simple
         let formatted = textoHTML
             .replace(/\n/g, '<br>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/🛡️/g, '<span style="font-size:1.2em">🛡️</span>')
-            .replace(/📉/g, '<span style="font-size:1.2em">📉</span>')
-            .replace(/💡/g, '<span style="font-size:1.2em">💡</span>');
-            
-        resultDiv.innerHTML = formatted;
-        resultDiv.style.display = 'block';
-        resultDiv.style.borderLeft = "5px solid #9CBF28"; 
-        document.getElementById('loading_ai').style.display = 'none';
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        document.getElementById('ia_content').innerHTML = formatted;
+        document.getElementById('ia_actions').style.display = 'block';
+        
+        // Resetear botón de agregar
+        const btn = document.getElementById('btn_add_pdf');
+        btn.innerText = "➕ Agregar al PDF";
+        btn.classList.remove('added');
+        window.incluirIAPdf = false;
+
+        // Abrir Sidebar
+        document.getElementById('ia_sidebar').classList.add('open');
+    }
+
+    function cerrarSidebar() {
+        document.getElementById('ia_sidebar').classList.remove('open');
+    }
+
+    function agregarAlPDF() {
+        const btn = document.getElementById('btn_add_pdf');
+        if (!window.incluirIAPdf) {
+            window.incluirIAPdf = true;
+            btn.innerText = "✅ Agregado al Reporte";
+            btn.classList.add('added');
+        } else {
+            window.incluirIAPdf = false;
+            btn.innerText = "➕ Agregar al PDF";
+            btn.classList.remove('added');
+        }
     }
 
     // 4.2 Función de Envío de Correo
