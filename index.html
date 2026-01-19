@@ -22,6 +22,31 @@
             --text-light: #777777;
         }
 
+        /* --- NUEVO: Estilo Globo de Texto IA --- */
+        .bubble-right {
+            background-color: #f0f7ff; /* Azul muy suave */
+            border-left: 5px solid #4285f4; /* Borde azul IA */
+            border-radius: 12px;
+            border-bottom-right-radius: 0; /* Efecto globo */
+            padding: 15px;
+            margin-top: 15px;
+            margin-left: 10%; /* Empujar a la derecha */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            position: relative;
+        }
+        .bubble-right::after {
+            content: "🤖";
+            position: absolute;
+            bottom: -10px;
+            right: -5px;
+            font-size: 1.5rem;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--dosh-bg); padding: 15px; color: var(--text-main); margin: 0; -webkit-tap-highlight-color: transparent; padding-bottom: 50px; }
         .container { max-width: 800px; margin: 0 auto; background: rgb(240, 239, 239); padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0, 59, 115, 0.08); border-top: 5px solid var(--dosh-green); }
         h1 { color: var(--dosh-blue); font-size: 1.6rem; margin-top: 0; text-align: center; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase; }
@@ -391,8 +416,9 @@
         </div>
     </div>
 
-    <div id="slide_final" class="slide">
+<div id="slide_final" class="slide">
         <h2>📊 Resumen Financiero</h2>
+        
         <div class="result-box">
             <div class="interest-highlight">
                 <div class="result-row">
@@ -404,6 +430,7 @@
                     <span id="res_interes_total" class="red-text">$ 0</span>
                 </div>
             </div>
+
             <div class="result-row">
                 <span>📉 <strong>Total Egresos</strong></span>
                 <span id="res_subtotal_gastos" class="red-text" style="color: #c0392b;">$ 0</span>
@@ -412,6 +439,7 @@
                 <summary>Ver Desglose Gastos</summary>
                 <div id="breakdown_gastos" class="breakdown-list"></div>
             </details>
+
             <div class="result-row">
                 <span>📈 <strong>Total Ingresos</strong></span>
                 <span id="res_total_ingresos" class="green-text">$ 0</span>
@@ -420,18 +448,22 @@
                 <summary>Ver Desglose Ingresos</summary>
                 <div id="breakdown_ingresos" class="breakdown-list"></div>
             </details>
+
             <div class="result-row" style="margin-top: 10px; border-top: 2px solid #eee; padding-top: 10px;">
                 <span>💰 Utilidad Bruta</span>
                 <span id="res_saldo_favor" style="font-weight: bold;">$ 0</span>
             </div>
+
             <div class="result-row">
                 <span>🏛️ Impuesto (27%)</span>
                 <span id="res_impuesto" class="brand-text">$ 0</span>
             </div>
+
             <div class="result-row total-final">
                 <span>🚀 UTILIDAD NETA</span>
                 <span id="res_saldo_final_liquido">$ 0</span>
             </div>
+            
             <div class="row" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
                 <div class="col" style="text-align: center;">
                     <span style="font-size: 0.8rem; color: #666;">ROI</span><br>
@@ -442,6 +474,20 @@
                     <span id="res_rentabilidad" style="font-weight: bold; color: var(--dosh-blue);">0%</span>
                 </div>
             </div>
+        </div>
+
+        <div id="sec_ia" style="margin-top: 20px; margin-bottom: 20px;">
+            <button onclick="consultarGroq()" 
+                    style="background: linear-gradient(45deg, #4285f4, #9b72cb); color: white; width: 100%; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3);">
+                 🤖 Analizar Oportunidad con IA
+            </button>
+    
+            <div id="loading_ai" style="display:none; text-align: center; margin-top: 15px;">
+                <div class="spinner" style="width: 30px; height: 30px; border-width: 3px;"></div>
+                <p style="font-size: 0.8rem; margin-top: 5px;">Pensando...</p>
+            </div>
+    
+            <div id="resultado_ai" class="bubble-right" style="display: none;"></div>
         </div>
 
         <div class="result-box" style="background-color: #e3f2fd; border-color: #90caf9; margin-bottom: 15px;">
@@ -456,6 +502,7 @@
         <button class="btn-pdf" py-click="generar_pdf_completo">📥 Descargar PDF (Guardar)</button>
         <button class="btn-new" py-click="nueva_operacion">🔄 Nueva Operación / Menú</button>
         <div id="mensaje"></div>
+
         <div class="nav-buttons">
             <button class="btn-back" py-click="ir_slide_3">← Editar</button>
         </div>
@@ -837,7 +884,7 @@ def crear_pdf_objeto():
         str_link = document.getElementById("input_link").value or "No especificado"
         notas = document.getElementById("input_detalles").value or "Sin observaciones registradas."
         
-        # 3. Capturar Valores Numéricos para el Desglose (Recalculamos variables locales para listarlas)
+        # 3. Capturar Valores Numéricos
         postura_min = get_val("input_postura_min")
         oferta_max = get_val("input_oferta_max")
         garantia = get_val("input_garantia")
@@ -869,12 +916,12 @@ def crear_pdf_objeto():
             c_abogado = get_val("costo_abogado")
             c_judiciales = get_val("costo_judiciales")
 
-        # Calcular intereses para el desglose
+        # Calcular intereses
         gastos_ops = c_abogado + c_notaria + c_cbr + c_judiciales + c_busqueda + alzamientos + c_comision_compra + c_escritura
         base_int = gastos_ops + garantia + precio_adjudicacion + mejoras + comision_venta + legal_venta + iva_venta
         interes_total = (base_int * 0.007) * meses
 
-        # Totales Finales (Texto formateado)
+        # Totales Finales
         str_ingresos = document.getElementById("res_total_ingresos").innerText
         str_egresos = document.getElementById("res_subtotal_gastos").innerText
         str_utilidad = document.getElementById("res_saldo_final_liquido").innerText
@@ -882,7 +929,7 @@ def crear_pdf_objeto():
         # --- INICIO GENERACIÓN PDF ---
         doc = window.jspdf.jsPDF.new()
         
-        # 1. IMAGEN PRINCIPAL (HEADER)
+        # 1. IMAGEN PRINCIPAL
         imgs_collection = document.getElementsByClassName("img-thumbnail")
         if imgs_collection.length > 0:
             main_img = imgs_collection[0]
@@ -897,7 +944,7 @@ def crear_pdf_objeto():
                     doc.addImage(main_img.src, img_format, 140, 10, final_w, final_h)
                 except: pass 
 
-        # 2. ENCABEZADO Y DATOS
+        # 2. ENCABEZADO
         doc.setFont("helvetica", "bold"); doc.setFontSize(18)
         titulo = "FICHA EVALUACIÓN MACAL" if MODO_ACTUAL == "MACAL" else "FICHA EVALUACIÓN REMATE"
         doc.setTextColor(0, 59, 115)
@@ -910,55 +957,37 @@ def crear_pdf_objeto():
         doc.setFontSize(9); doc.setTextColor(0, 59, 115)
         doc.text(f"Link: {str_link}", 20, 50)
         
-        # Cursor Y dinámico
         y = 60
         
-        # 3. NOTAS / ESTADO (Con ajuste de texto automático)
+        # 3. NOTAS
         doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(0, 0, 0)
-        doc.text("NOTAS / ESTADO:", 20, y)
-        y += 6
-        
+        doc.text("NOTAS / ESTADO:", 20, y); y += 6
         doc.setFont("helvetica", "normal")
-        # splitTextToSize divide el texto largo en varias líneas para que quepa en 170 unidades de ancho
         lines_notas = doc.splitTextToSize(notas, 170)
         doc.text(lines_notas, 20, y)
-        
-        # Bajamos el cursor según cuantas lineas ocupó la nota
         y += (len(lines_notas) * 5) + 5
         
-        # Línea separadora
-        doc.setDrawColor(200, 200, 200)
-        doc.line(20, y, 190, y)
-        y += 10
+        doc.setDrawColor(200, 200, 200); doc.line(20, y, 190, y); y += 10
 
-        # 4. DESGLOSE TIPO BOLETA
+        # 4. DESGLOSE BOLETA
         doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(0, 59, 115)
-        doc.text("DESGLOSE FINANCIERO DETALLADO", 20, y)
-        y += 10
-        
+        doc.text("DESGLOSE FINANCIERO DETALLADO", 20, y); y += 10
         doc.setFontSize(10); doc.setTextColor(50, 50, 50)
         
-        # Función auxiliar para imprimir filas de la boleta
         def print_row(label, val, bold=False):
             nonlocal y
-            # Si se acaba la hoja, crear nueva
-            if y > 270: 
-                doc.addPage(); y = 20
-            
+            if y > 270: doc.addPage(); y = 20
             if bold: doc.setFont("helvetica", "bold")
             else: doc.setFont("helvetica", "normal")
-            
             doc.text(label, 20, y)
             doc.text(format_money(val), 180, y, align="right")
             y += 6
 
-        # --- SECCIÓN A: ADQUISICIÓN ---
         doc.setFont("helvetica", "bold"); doc.text("1. ADQUISICIÓN", 20, y); y += 6
         print_row("Precio Adjudicación", precio_adjudicacion)
         print_row("Garantía (Reembolsable)", garantia)
         y += 2
         
-        # --- SECCIÓN B: GASTOS OPERACIONALES ---
         doc.setFont("helvetica", "bold"); doc.text("2. GASTOS OPERACIONALES", 20, y); y += 6
         if MODO_ACTUAL == "MACAL":
             print_row("Comisión Macal", c_comision_compra)
@@ -975,7 +1004,6 @@ def crear_pdf_objeto():
         print_row("Alzamientos", alzamientos)
         y += 2
         
-        # --- SECCIÓN C: HABILITACIÓN Y VENTA ---
         doc.setFont("helvetica", "bold"); doc.text("3. HABILITACIÓN Y VENTA", 20, y); y += 6
         print_row("Mejoras / Reformas", mejoras)
         print_row("Comisión Venta (2%)", comision_venta)
@@ -983,30 +1011,39 @@ def crear_pdf_objeto():
         print_row("Legal Venta", legal_venta)
         y += 2
         
-        # --- SECCIÓN D: COSTO FINANCIERO ---
         doc.setFont("helvetica", "bold"); doc.text("4. COSTO FINANCIERO", 20, y); y += 6
         print_row(f"Intereses ({int(meses)} meses)", interes_total)
         y += 5
         
-        # 5. TOTALES FINALES
-        doc.setDrawColor(0, 0, 0)
-        doc.line(20, y, 190, y)
-        y += 8
+        doc.setDrawColor(0, 0, 0); doc.line(20, y, 190, y); y += 8
         
         doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(0, 0, 0)
-        doc.text("TOTAL INGRESOS", 20, y)
-        doc.text(str_ingresos, 180, y, align="right")
-        y += 6
-        
-        doc.setTextColor(192, 57, 43) # Rojo para egresos
-        doc.text("TOTAL EGRESOS", 20, y)
-        doc.text(str_egresos, 180, y, align="right")
-        y += 10
-        
-        doc.setFontSize(14); doc.setTextColor(0, 100, 0) # Verde utilidad
+        doc.text("TOTAL INGRESOS", 20, y); doc.text(str_ingresos, 180, y, align="right"); y += 6
+        doc.setTextColor(192, 57, 43)
+        doc.text("TOTAL EGRESOS", 20, y); doc.text(str_egresos, 180, y, align="right"); y += 10
+        doc.setFontSize(14); doc.setTextColor(0, 100, 0)
         doc.text(f"UTILIDAD NETA: {str_utilidad}", 20, y)
 
-        # 6. GALERÍA DE FOTOS ADICIONALES (Tu código existente)
+        # 5. ANEXO IA (NUEVO BLOQUE)
+        # Capturamos el texto visible del div resultado_ai
+        texto_ia_html = document.getElementById("resultado_ai").innerText
+        
+        # Solo imprimimos si la IA dijo algo (más de 10 letras)
+        if len(texto_ia_html) > 10:
+            doc.addPage()
+            
+            # Título IA
+            doc.setFont("helvetica", "bold"); doc.setFontSize(16); doc.setTextColor(66, 133, 244) # Azul IA
+            doc.text("Análisis de Inteligencia Artificial", 20, 20)
+            
+            # Contenido IA
+            doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(50, 50, 50)
+            
+            # splitTextToSize corta el texto para que quepa en el ancho de la hoja
+            lines_ia = doc.splitTextToSize(texto_ia_html, 170)
+            doc.text(lines_ia, 20, 35)
+
+        # 6. GALERÍA DE FOTOS
         if imgs_collection.length > 1:
             doc.addPage()
             doc.setTextColor(0, 59, 115); doc.setFontSize(16)
