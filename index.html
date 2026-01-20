@@ -13,7 +13,7 @@
     <style id="common-styles">
         /* Variables */
         :root {
-            --dosh-blue: #003B73;       
+            --dosh-blue: #003B73;        
             --dosh-green: #9CBF28;      
             --dosh-green-dark: #7da118; 
             --dosh-bg: #d3d4d6;         
@@ -338,7 +338,7 @@
                     <input type="number" id="input_postura_min_uf" placeholder="UF" 
                            style="flex: 0.8; font-size: 0.9rem; padding: 10px;"
                            py-input="convertir_uf_a_clp">
-                    <input type="number" inputmode="numeric" id="input_postura_min" placeholder="$ CLP" value="0"
+                    <input type="number" inputmode="numeric" id="input_postura_min" placeholder="$ CLP" 
                            style="flex: 1.2; font-weight: bold;"
                            py-input="convertir_clp_a_uf">
                 </div>
@@ -346,18 +346,18 @@
             </div>
             <div class="col">
                 <label>Oferta Máxima ($)</label>
-                <input type="number" inputmode="numeric" id="input_oferta_max" value="0"
-                       oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                <input type="number" inputmode="numeric" id="input_oferta_max" placeholder="$"
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </div>
         </div>
         <div class="row">
             <div class="col">
                 <label>Garantía (Vale Vista)</label>
-                <input type="number" inputmode="numeric" id="input_garantia" value="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                <input type="number" inputmode="numeric" id="input_garantia" placeholder="$" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </div>
             <div class="col">
                 <label>Meses (Interés)</label>
-                <input type="number" inputmode="numeric" id="cant_mes" value="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                <input type="number" inputmode="numeric" id="cant_mes" value="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </div>
         </div>
         <div id="container_costos_normales">
@@ -428,7 +428,7 @@
         <h2>3. Proyección Venta</h2>
         <label>Precio Venta Estimado ($)</label>
         <span class="small-note">Valor mercado estimado</span>
-        <input type="number" inputmode="numeric" id="input_venta_vivienda" value="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+        <input type="number" inputmode="numeric" id="input_venta_vivienda" placeholder="$" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
         <div class="row" style="margin-top: 15px;">
              <div class="col">
                 <label>🛠️ Mejoras / Reformas</label>
@@ -682,9 +682,11 @@
         ids_text = ["input_nombre", "input_direccion", "input_superficie", "input_detalles", "input_fuente", "input_link"]
         for i in ids_text: document.getElementById(i).value = ""
         
-        ids_num = ["input_postura_min", "input_oferta_max", "input_garantia", "input_venta_vivienda", "input_mejoras", "cant_mes"]
+        ids_num = ["input_postura_min", "input_oferta_max", "input_garantia", "input_venta_vivienda", "input_mejoras"]
         for i in ids_num: document.getElementById(i).value = ""
         
+        document.getElementById("cant_mes").value = "1"
+
         document.getElementById("costo_abogado").value = str(DEF_ABOGADO)
         document.getElementById("costo_notaria").value = str(DEF_NOTARIA)
         document.getElementById("costo_cbr").value = str(DEF_CBR)
@@ -1134,7 +1136,7 @@
             2. 📉 STRESS TEST: ¿Aguanta venta -10%?
             3. 💡 VEREDICTO: APRUEBAS o RECHAZAS y por qué.
             4. 🚀 2 ACCIONES INMEDIATAS.
-            CONCLUSIÓN BREVE. "
+            CONCLUSIÓN BREVE. Firma: "Programa desarrollado por Hizoka."
         `;
 
         document.getElementById('loading_ai').style.display = 'block';
