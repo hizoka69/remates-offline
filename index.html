@@ -125,11 +125,24 @@
         .row { display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; }
         .col { flex: 1; }
         
-        /* Inputs IOS Style */
+        /* Inputs IOS Style (SOLO TEXTO, NO RADIO) */
         label { font-weight: 600; display: block; margin-bottom: 8px; font-size: 0.9rem; color: #444; }
+        
         input, select, textarea { width: 100%; padding: 16px; border: 1px solid #ddd; border-radius: 16px; box-sizing: border-box; font-size: 16px; background-color: white; color: #333; -webkit-appearance: none; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
         input:focus, select:focus, textarea:focus { border-color: var(--dosh-blue); outline: none; }
         
+        /* CORRECCIÓN RADIO BUTTONS MÓVIL */
+        input[type="radio"] {
+            width: auto;
+            height: auto;
+            margin: 0;
+            padding: 0;
+            border: none;
+            -webkit-appearance: radio; /* Restaurar apariencia nativa */
+            appearance: radio;
+            box-shadow: none;
+        }
+
         /* Botones Móvil */
         .nav-buttons { display: flex; gap: 10px; margin-top: 30px; padding-bottom: 20px; }
         button { padding: 18px; border: none; border-radius: 16px; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -155,12 +168,12 @@
         .mode-card p { margin: 0; font-size: 0.85rem; color: #777; }
         .badge-new { position: absolute; top: 10px; right: 10px; background: var(--dosh-green); color: white; font-size: 0.65rem; font-weight: bold; padding: 3px 8px; border-radius: 10px; }
         
-        /* Macal Radio Buttons Móvil (CORREGIDO) */
+        /* Macal Radio Buttons Móvil */
         .macal-option-box { background-color: #e3f2fd; border: none; border-radius: 16px; padding: 15px; margin-bottom: 15px; }
         .radio-group { display: flex; gap: 10px; margin-bottom: 15px; flex-direction: row; }
         .radio-group label { flex: 1; display: flex; align-items: center; gap: 8px; background: white; padding: 12px; border-radius: 12px; border: 1px solid #ddd; margin-bottom: 0; font-size: 0.85rem; justify-content: center; text-align: center;}
         
-        /* Sidebar IA Móvil (Bottom Sheet) */
+        /* Sidebar IA Móvil (Bottom Sheet) - CORREGIDO SCROLL */
         .ia-sidebar {
             position: fixed; left: 0; right: 0; bottom: -100vh;
             width: 100%; height: 85vh;
@@ -171,10 +184,23 @@
             top: auto; border-left: none;
         }
         .ia-sidebar.open { bottom: 0; right: 0; }
-        .ia-header { padding: 20px; background: white; border-bottom: 1px solid #eee; border-radius: 20px 20px 0 0; }
+        .ia-header { padding: 20px; background: white; border-bottom: 1px solid #eee; border-radius: 20px 20px 0 0; flex-shrink: 0; } /* Header fijo */
         .ia-header h3 { color: var(--dosh-blue); }
         .btn-close { color: #999; font-size: 2rem; background: #f0f0f0; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding-bottom: 4px; }
-        .ia-content { background: #fcfcfc; }
+        
+        .ia-content { 
+            background: #fcfcfc; 
+            padding: 20px;
+            overflow-y: auto; /* Permite scroll vertical */
+            flex-grow: 1;     /* Ocupa el espacio restante */
+        }
+        
+        .ia-actions { 
+            padding: 20px; 
+            background: white; 
+            border-top: 1px solid #eee;
+            flex-shrink: 0; /* Footer fijo */
+        }
     </style>
     
     <script>
@@ -205,6 +231,7 @@
 <div id="loading-overlay">
     <div class="spinner"></div>
     <h3 style="color: var(--dosh-blue); margin-top: 20px;">Cargando Sistema...</h3>
+    <p style="color: #666; font-size: 0.9rem;">Configurando entorno Python</p>
 </div>
 
 <div class="app-header">
@@ -311,7 +338,7 @@
                     <input type="number" id="input_postura_min_uf" placeholder="UF" 
                            style="flex: 0.8; font-size: 0.9rem; padding: 10px;"
                            py-input="convertir_uf_a_clp">
-                    <input type="number" inputmode="numeric" id="input_postura_min" placeholder="$ CLP"
+                    <input type="number" inputmode="numeric" id="input_postura_min" placeholder="$ CLP" value="0"
                            style="flex: 1.2; font-weight: bold;"
                            py-input="convertir_clp_a_uf">
                 </div>
@@ -319,23 +346,22 @@
             </div>
             <div class="col">
                 <label>Oferta Máxima ($)</label>
-                <input type="number" inputmode="numeric" id="input_oferta_max" placeholder="0"
+                <input type="number" inputmode="numeric" id="input_oferta_max" value="0"
                        oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </div>
         </div>
         <div class="row">
             <div class="col">
                 <label>Garantía (Vale Vista)</label>
-                <input type="number" inputmode="numeric" id="input_garantia" placeholder="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                <input type="number" inputmode="numeric" id="input_garantia" value="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </div>
             <div class="col">
                 <label>Meses (Interés)</label>
-                <input type="number" inputmode="numeric" id="cant_mes" placeholder="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                <input type="number" inputmode="numeric" id="cant_mes" value="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </div>
         </div>
-        
         <div id="container_costos_normales">
-            <h2 style="font-size: 1rem; border:none; margin-bottom: 5px; color: #777;">Costos Fijos (Editables)</h2>
+            <h2 style="font-size: 1rem; border:none; margin-bottom: 5px; color: var(--text-light);">Costos Fijos (Editables)</h2>
             <div class="result-box">
                 <div class="result-row">
                     <span>⚖️ Abogado</span>
@@ -363,14 +389,12 @@
                 </div>
             </div>
         </div>
-
         <div id="container_msg_macal" style="display:none; text-align: center; color: #666; font-size: 0.9rem; margin-top: 15px; background: #e8f4f8; padding: 10px; border-radius: 8px;">
-            <p>ℹ️ <strong>Modo Macal</strong>: Costos de Escritura, Notaría y CBR automáticos.</p>
+            <p>ℹ️ En <strong>Modo Macal</strong>, los costos de Escrituración, Notaría y CBR se calculan automáticamente según las fórmulas oficiales en el siguiente paso.</p>
         </div>
-        
         <div class="nav-buttons">
-            <button class="btn-back" py-click="ir_slide_1">Atrás</button>
-            <button class="btn-next" py-click="ir_slide_3">Siguiente</button>
+            <button class="btn-back" py-click="ir_slide_1">← Atrás</button>
+            <button class="btn-next" py-click="ir_slide_3">Siguiente ➝</button>
         </div>
     </div>
 
@@ -389,31 +413,28 @@
                 </label>
             </div>
             <div class="result-row">
-                <span>Notaría (Auto)</span>
-                <span class="small-note" style="text-align: right;">Base 70k + 0.1%</span>
+                <span>📝 Notaría (Base $70k + 0.1%)</span>
+                <span class="small-note" style="text-align: right;">Automático</span>
             </div>
             <div class="result-row">
-                <span>CBR (Editable)</span>
+                <span>🏛️ CBR (0.4%, Mín $250k)</span>
                 <input type="number" inputmode="numeric" id="macal_cbr_editable" value="250000" class="input-editable">
             </div>
             <div class="result-row" style="margin-top:5px;">
-                <span>Escrituración</span>
+                <span>📄 Escrituración (Acorde a precio de adjudicacion)</span>
                 <span id="disp_escritura_uf" class="brand-text" style="font-size:0.9rem;">-- UF + IVA</span>
             </div>
         </div>
-
         <h2>3. Proyección Venta</h2>
         <label>Precio Venta Estimado ($)</label>
         <span class="small-note">Valor mercado estimado</span>
-        <input type="number" inputmode="numeric" id="input_venta_vivienda" placeholder="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-        
+        <input type="number" inputmode="numeric" id="input_venta_vivienda" value="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
         <div class="row" style="margin-top: 15px;">
              <div class="col">
                 <label>🛠️ Mejoras / Reformas</label>
                 <input type="number" inputmode="numeric" id="input_mejoras" value="3000000" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </div>
         </div>
-        
         <div class="result-box">
              <div class="result-row">
                 <span>🤝 Comisión Venta (2%)</span>
@@ -424,13 +445,12 @@
                 <span id="disp_iva" class="brand-text">--</span>
             </div>
             <div class="result-row" id="row_legal_venta">
-                 <span>📄 Legal Venta</span>
+                 <span>📄 Legal Venta (Propia)</span>
                  <input type="number" inputmode="numeric" id="costo_legal_venta" value="100000" class="input-editable">
             </div>
         </div>
-        
         <div class="nav-buttons">
-            <button class="btn-back" py-click="ir_slide_2">Atrás</button>
+            <button class="btn-back" py-click="ir_slide_2">← Atrás</button>
             <button class="btn-next" py-click="calcular_y_mostrar_final" style="background-color: var(--dosh-green);">Calcular Resultados 🏁</button>
         </div>
     </div>
@@ -511,9 +531,10 @@
                 <input type="email" id="input_email_cliente" placeholder="cliente@email.com" style="flex: 1; padding: 10px;">
                 <button py-click="solo_enviar_correo" style="flex: 0.3; background: var(--dosh-blue); color: white; border-radius: 8px; font-size: 1.2rem; padding: 0;">📤</button>
             </div>
+            <p class="small-note">Toca el botón 📤 para enviar sin descargar.</p>
         </div>
 
-        <button class="btn-pdf" py-click="generar_pdf_completo">📥 Guardar PDF</button>
+        <button class="btn-pdf" py-click="generar_pdf_completo">📥 Descargar PDF (Guardar)</button>
         <button class="btn-new" py-click="nueva_operacion">🔄 Nueva Operación</button>
         <div id="mensaje"></div>
 
@@ -546,6 +567,7 @@
     from js import jspdf
     import datetime
 
+    # --- DATOS REGIONALES ---
     CHILE_DATA = {
         "Arica y Parinacota": ["Arica", "Camarones", "Putre", "General Lagos"],
         "Tarapacá": ["Iquique", "Alto Hospicio", "Pozo Almonte", "Camiña", "Colchane", "Huara", "Pica"],
@@ -565,6 +587,7 @@
         "Magallanes": ["Punta Arenas", "Laguna Blanca", "Río Verde", "San Gregorio", "Cabo de Hornos", "Antártica", "Porvenir", "Primavera", "Timaukel", "Natales", "Torres del Paine"]
     }
     
+    # --- CONSTANTES ---
     VALOR_UF = 38000
     DEF_ABOGADO = 1600000
     DEF_NOTARIA = 300000
@@ -573,6 +596,7 @@
     DEF_JUDICIALES = 300000
     DEF_LEGAL_VENTA = 100000
     
+    # Variables Globales
     MODO_ACTUAL = "NORMAL"
     MACAL_COSTO_ESCRITURA = 0
     MACAL_COSTO_COMISION = 0
@@ -603,6 +627,7 @@
             opt.value = c
             sel_com.add(opt)
 
+    # --- NAVEGACIÓN ---
     def cambiar_slide(id_mostrar):
         ids = ["slide_selection", "slide1", "slide2", "slide3", "slide_final"]
         subt = document.getElementById("main_subtitle")
@@ -624,6 +649,7 @@
                 el.classList.remove("active")
         window.scrollTo(0, 0)
 
+    # --- MODO Y INPUTS ---
     def ir_menu_principal(e): cambiar_slide("slide_selection")
     def ir_slide_1(e): cambiar_slide("slide1")
     def ir_slide_2(e): cambiar_slide("slide2")
@@ -698,6 +724,7 @@
 
         cambiar_slide("slide_selection")
 
+    # --- UF LOGIC ---
     def get_val(id_elem):
         v = document.getElementById(id_elem).value
         if not v: return 0.0
@@ -728,6 +755,7 @@
     def recalcular_todo_uf(e):
         convertir_uf_a_clp(None)
 
+    # --- CALCULOS ---
     def crear_fila_desglose(label, valor):
         return f'<div class="breakdown-item"><span>{label}</span><span>{format_money(valor)}</span></div>'
     
@@ -747,6 +775,7 @@
     def calcular_y_mostrar_final(e):
         global MACAL_COSTO_ESCRITURA, MACAL_COSTO_COMISION, MACAL_COSTO_NOTARIA, MACAL_COSTO_CBR, MACAL_COSTO_BUSQUEDA, UF_COBRO_LABEL
         
+        # 1. Obtener valores
         postura_min = get_val("input_postura_min")
         oferta_max = get_val("input_oferta_max") 
         garantia = get_val("input_garantia")
@@ -756,10 +785,13 @@
         c_alzamientos = get_val("costo_alzamientos") 
         c_legal_venta = get_val("costo_legal_venta")
 
+        # Definimos la base: Suma de ofertas (para Busqueda e Interes) vs Precio Real (para Macal)
         suma_ofertas = postura_min + oferta_max
         precio_adjudicacion = oferta_max if oferta_max > 0 else postura_min
 
+        # 2. Calcular Costos según Modo
         if MODO_ACTUAL == "MACAL":
+            # --- Lógica Macal ---
             if document.getElementById("radio_liq").checked:
                 tasa_comision = 0.02
                 label_comision_compra = "Comisión Liq. (2% + IVA)"
@@ -768,59 +800,81 @@
                 label_comision_compra = "Comisión Normal (3% + IVA)"
             
             MACAL_COSTO_COMISION = (precio_adjudicacion * tasa_comision) * 1.19
+            
             uf_cobro, costo_escritura = calcular_escritura_macal(precio_adjudicacion)
             MACAL_COSTO_ESCRITURA = costo_escritura
             UF_COBRO_LABEL = f"{uf_cobro} UF"
             document.getElementById("disp_escritura_uf").innerText = f"{uf_cobro} UF + IVA"
+            
+            # Notaría Macal: 70k + 0.1% del precio adjudicación
             MACAL_COSTO_NOTARIA = 70000 + (precio_adjudicacion * 0.001)
             
+            # CBR Macal: 0.4% del precio adjudicación (Mínimo 250k)
             cbr_usuario = get_val("macal_cbr_editable")
             calc_cbr_min = precio_adjudicacion * 0.004
-            if cbr_usuario == 250000: 
+            if cbr_usuario == 250000: # Si no lo ha editado manualmente
                 MACAL_COSTO_CBR = 250000 if calc_cbr_min < 250000 else calc_cbr_min
                 document.getElementById("macal_cbr_editable").value = str(int(MACAL_COSTO_CBR))
             else:
                 MACAL_COSTO_CBR = cbr_usuario
                 
-            MACAL_COSTO_BUSQUEDA = 0 
+            MACAL_COSTO_BUSQUEDA = 0 # En Macal no hay honorario búsqueda externo usualmente, o es 0
             label_busqueda = "Búsqueda"
+            
+            # Reset variables normales
             costo_abogado = 0; costo_judiciales = 0; costo_notaria_normal = 0; costo_cbr_normal = 0; costo_busqueda_normal = 0
             
         else:
+            # --- Lógica Normal ---
             costo_abogado = get_val("costo_abogado")
             costo_notaria_normal = get_val("costo_notaria")
             costo_cbr_normal = get_val("costo_cbr")
             costo_judiciales = get_val("costo_judiciales")
+            
+            # Búsqueda: 2% de (Postura + Oferta)
             costo_busqueda_normal = suma_ofertas * 0.02
             label_busqueda = "Honorarios Búsqueda (2%)"
+            
+            # Reset variables Macal
             MACAL_COSTO_COMISION = 0; MACAL_COSTO_ESCRITURA = 0; MACAL_COSTO_NOTARIA = 0; MACAL_COSTO_CBR = 0; MACAL_COSTO_BUSQUEDA = 0
 
+        # 3. Costos de Venta
+        # OJO: Se calcula sobre el precio de VENTA, no de compra (estándar mercado)
         comision_venta = venta_vivienda * 0.02
         iva_venta = (venta_vivienda / 1.19) * 0.19
         
+        # 4. Total Gastos Operacionales
         if MODO_ACTUAL == "MACAL":
             gastos_operacionales = (MACAL_COSTO_NOTARIA + MACAL_COSTO_CBR + c_alzamientos + MACAL_COSTO_ESCRITURA + MACAL_COSTO_COMISION)
         else:
             gastos_operacionales = (costo_abogado + costo_notaria_normal + costo_cbr_normal + c_alzamientos + costo_judiciales + costo_busqueda_normal)
         
+        # 5. Cálculo de INTERESES (CORREGIDO)
+        # Tu indicación: 0.7% mensual sobre (Postura Mínima + Oferta Máxima)
         base_calculo_interes = suma_ofertas
         interes_mensual = base_calculo_interes * 0.007
         interes_total = interes_mensual * meses_interes
         
+        # 6. Totales Finales
+        # El subtotal de gastos incluye todo lo que sale del bolsillo
         subtotal_gasto = (precio_adjudicacion + gastos_operacionales + garantia + costo_mejoras + comision_venta + c_legal_venta + iva_venta + interes_total)
-        total_ingresos = venta_vivienda + garantia
+        
+        total_ingresos = venta_vivienda + garantia # La garantía vuelve
         saldo_favor = total_ingresos - subtotal_gasto
+        
         impuesto = saldo_favor * 0.27 if saldo_favor > 0 else 0
         saldo_final = saldo_favor - impuesto
         
         roi = (saldo_final / subtotal_gasto) * 100 if subtotal_gasto > 0 else 0
         rentabilidad = (saldo_final / venta_vivienda) * 100 if venta_vivienda > 0 else 0
 
+        # --- Actualización del DOM (HTML) ---
         if MODO_ACTUAL == "MACAL": document.getElementById("disp_busqueda").innerText = format_money(0)
         else: document.getElementById("disp_busqueda").innerText = format_money(costo_busqueda_normal)
         
         document.getElementById("disp_comision").innerText = format_money(comision_venta)
         document.getElementById("disp_iva").innerText = format_money(iva_venta)
+        
         document.getElementById("res_interes_mensual").innerText = format_money(interes_mensual)
         document.getElementById("res_interes_total").innerText = format_money(interes_total)
         
@@ -833,6 +887,7 @@
         document.getElementById("res_roi").innerText = "{:.1f}%".format(roi)
         document.getElementById("res_rentabilidad").innerText = "{:.1f}%".format(rentabilidad)
 
+        # --- Generar Desglose Visual ---
         html_gastos = ""
         html_gastos += crear_titulo_desglose("1. Inversión Inicial")
         html_gastos += crear_fila_desglose("Precio Adjudicación", precio_adjudicacion)
@@ -859,7 +914,7 @@
         html_gastos += crear_fila_desglose("Legal Venta", c_legal_venta)
         
         html_gastos += crear_titulo_desglose("4. Costo Financiero")
-        html_gastos += crear_fila_desglose(f"Interés ({meses_interes} meses)", interes_total)
+        html_gastos += crear_fila_desglose(f"Interés ({meses_interes} meses sobre base {format_money(base_calculo_interes)})", interes_total)
         
         document.getElementById("breakdown_gastos").innerHTML = html_gastos
 
@@ -871,6 +926,7 @@
         
         cambiar_slide("slide_final")
 
+    # --- PDF GENERATOR ---
     def crear_pdf_objeto():
         calcular_y_mostrar_final(None)
         nombre = document.getElementById("input_nombre").value
@@ -1049,6 +1105,7 @@
 </script>
 
 <script>
+    // Variable global para saber si incluimos la IA en el PDF
     window.incluirIAPdf = false;
 
     async function consultarGroq() {
@@ -1122,7 +1179,7 @@
         const btn = document.getElementById('btn_add_pdf');
         if (!window.incluirIAPdf) {
             window.incluirIAPdf = true;
-            btn.innerText = "✅ Agregado";
+            btn.innerText = "✅ Agregado al Reporte";
             btn.classList.add('added');
         } else {
             window.incluirIAPdf = false;
@@ -1145,7 +1202,7 @@
             return;
         }
 
-        mensajeDiv.innerText = "⏳ Enviando correo...";
+        mensajeDiv.innerText = "⏳ Enviando correo a " + emailUsuario + "...";
         
         try {
             const response = await fetch('/api/enviar-pdf', {
@@ -1166,7 +1223,7 @@
             }
         } catch (e) {
             console.error(e);
-            mensajeDiv.innerText = "⚠️ Error de conexión.";
+            mensajeDiv.innerText = "⚠️ Error de conexión al enviar correo.";
         }
     }
 
@@ -1201,20 +1258,22 @@
         });
         window.scrollTo(0, 0);
     }
-    
+</script>
+
+<script>
     async function cargarUFDelDia() {
         const inputUF = document.getElementById("input_valor_uf_dia");
-        inputUF.placeholder = "...";
+        inputUF.placeholder = "Cargando...";
         try {
             const respuesta = await fetch('https://mindicador.cl/api/uf');
             if (!respuesta.ok) throw new Error("No se pudo conectar con la API");
             const datos = await respuesta.json();
             const valorReal = datos.serie[0].valor;
             inputUF.value = Math.round(valorReal); 
-            console.log("✅ UF Actualizada: $" + valorReal);
+            console.log("✅ UF Actualizada desde internet: $" + valorReal);
         } catch (error) {
-            console.error("⚠️ Error UF:", error);
-            inputUF.value = "38000"; 
+            console.error("⚠️ Error obteniendo UF:", error);
+            inputUF.value = "39800"; 
         }
     }
     window.addEventListener('load', cargarUFDelDia);
