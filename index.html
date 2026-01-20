@@ -697,6 +697,7 @@
     def calcular_y_mostrar_final(e):
         global MACAL_COSTO_ESCRITURA, MACAL_COSTO_COMISION, MACAL_COSTO_NOTARIA, MACAL_COSTO_CBR, MACAL_COSTO_BUSQUEDA, UF_COBRO_LABEL
         
+        # 1. Obtener valores
         postura_min = get_val("input_postura_min")
         oferta_max = get_val("input_oferta_max") 
         garantia = get_val("input_garantia")
@@ -706,82 +707,116 @@
         c_alzamientos = get_val("costo_alzamientos") 
         c_legal_venta = get_val("costo_legal_venta")
 
+        # Definimos la base: Suma de ofertas (para Busqueda e Interes) vs Precio Real (para Macal)
+        suma_ofertas = postura_min + oferta_max
         precio_adjudicacion = oferta_max if oferta_max > 0 else postura_min
 
+        # 2. Calcular Costos según Modo
         if MODO_ACTUAL == "MACAL":
+            # --- Lógica Macal ---
             if document.getElementById("radio_liq").checked:
                 tasa_comision = 0.02
                 label_comision_compra = "Comisión Liq. (2% + IVA)"
             else:
                 tasa_comision = 0.03
                 label_comision_compra = "Comisión Normal (3% + IVA)"
+            
             MACAL_COSTO_COMISION = (precio_adjudicacion * tasa_comision) * 1.19
+            
             uf_cobro, costo_escritura = calcular_escritura_macal(precio_adjudicacion)
             MACAL_COSTO_ESCRITURA = costo_escritura
             UF_COBRO_LABEL = f"{uf_cobro} UF"
             document.getElementById("disp_escritura_uf").innerText = f"{uf_cobro} UF + IVA"
+            
+            # Notaría Macal: 70k + 0.1% del precio adjudicación
             MACAL_COSTO_NOTARIA = 70000 + (precio_adjudicacion * 0.001)
+            
+            # CBR Macal: 0.4% del precio adjudicación (Mínimo 250k)
             cbr_usuario = get_val("macal_cbr_editable")
             calc_cbr_min = precio_adjudicacion * 0.004
-            if cbr_usuario == 250000:
+            if cbr_usuario == 250000: # Si no lo ha editado manualmente
                 MACAL_COSTO_CBR = 250000 if calc_cbr_min < 250000 else calc_cbr_min
                 document.getElementById("macal_cbr_editable").value = str(int(MACAL_COSTO_CBR))
             else:
                 MACAL_COSTO_CBR = cbr_usuario
-            MACAL_COSTO_BUSQUEDA = (postura_min + oferta_max) * 0.02
-            label_busqueda = "Búsqueda (2% Suma)"
+                
+            MACAL_COSTO_BUSQUEDA = 0 # En Macal no hay honorario búsqueda externo usualmente, o es 0
+            label_busqueda = "Búsqueda"
+            
+            # Reset variables normales
             costo_abogado = 0; costo_judiciales = 0; costo_notaria_normal = 0; costo_cbr_normal = 0; costo_busqueda_normal = 0
+            
         else:
+            # --- Lógica Normal ---
             costo_abogado = get_val("costo_abogado")
             costo_notaria_normal = get_val("costo_notaria")
             costo_cbr_normal = get_val("costo_cbr")
             costo_judiciales = get_val("costo_judiciales")
-            suma_ofertas = postura_min + oferta_max 
+            
+            # Búsqueda: 2% de (Postura + Oferta)
             costo_busqueda_normal = suma_ofertas * 0.02
             label_busqueda = "Honorarios Búsqueda (2%)"
+            
+            # Reset variables Macal
             MACAL_COSTO_COMISION = 0; MACAL_COSTO_ESCRITURA = 0; MACAL_COSTO_NOTARIA = 0; MACAL_COSTO_CBR = 0; MACAL_COSTO_BUSQUEDA = 0
 
+        # 3. Costos de Venta
+        # OJO: Se calcula sobre el precio de VENTA, no de compra (estándar mercado)
         comision_venta = venta_vivienda * 0.02
         iva_venta = (venta_vivienda / 1.19) * 0.19
         
+        # 4. Total Gastos Operacionales
         if MODO_ACTUAL == "MACAL":
-            gastos_operacionales = (MACAL_COSTO_NOTARIA + MACAL_COSTO_CBR + c_alzamientos + MACAL_COSTO_ESCRITURA + MACAL_COSTO_COMISION + MACAL_COSTO_BUSQUEDA)
+            gastos_operacionales = (MACAL_COSTO_NOTARIA + MACAL_COSTO_CBR + c_alzamientos + MACAL_COSTO_ESCRITURA + MACAL_COSTO_COMISION)
         else:
             gastos_operacionales = (costo_abogado + costo_notaria_normal + costo_cbr_normal + c_alzamientos + costo_judiciales + costo_busqueda_normal)
         
-        base_calculo_interes = (gastos_operacionales + garantia + postura_min + oferta_max + costo_mejoras + comision_venta + c_legal_venta + iva_venta)
+        # 5. Cálculo de INTERESES (CORREGIDO)
+        # Tu indicación: 0.7% mensual sobre (Postura Mínima + Oferta Máxima)
+        base_calculo_interes = suma_ofertas
         interes_mensual = base_calculo_interes * 0.007
         interes_total = interes_mensual * meses_interes
-        subtotal_gasto = base_calculo_interes + interes_total
-        total_ingresos = venta_vivienda + garantia
+        
+        # 6. Totales Finales
+        # El subtotal de gastos incluye todo lo que sale del bolsillo
+        subtotal_gasto = (precio_adjudicacion + gastos_operacionales + garantia + costo_mejoras + comision_venta + c_legal_venta + iva_venta + interes_total)
+        
+        total_ingresos = venta_vivienda + garantia # La garantía vuelve
         saldo_favor = total_ingresos - subtotal_gasto
+        
         impuesto = saldo_favor * 0.27 if saldo_favor > 0 else 0
         saldo_final = saldo_favor - impuesto
+        
         roi = (saldo_final / subtotal_gasto) * 100 if subtotal_gasto > 0 else 0
         rentabilidad = (saldo_final / venta_vivienda) * 100 if venta_vivienda > 0 else 0
 
-        if MODO_ACTUAL == "MACAL": document.getElementById("disp_busqueda").innerText = format_money(MACAL_COSTO_BUSQUEDA)
+        # --- Actualización del DOM (HTML) ---
+        if MODO_ACTUAL == "MACAL": document.getElementById("disp_busqueda").innerText = format_money(0)
         else: document.getElementById("disp_busqueda").innerText = format_money(costo_busqueda_normal)
+        
         document.getElementById("disp_comision").innerText = format_money(comision_venta)
         document.getElementById("disp_iva").innerText = format_money(iva_venta)
+        
         document.getElementById("res_interes_mensual").innerText = format_money(interes_mensual)
         document.getElementById("res_interes_total").innerText = format_money(interes_total)
+        
         document.getElementById("res_subtotal_gastos").innerText = format_money(subtotal_gasto)
         document.getElementById("res_total_ingresos").innerText = format_money(total_ingresos)
         document.getElementById("res_saldo_favor").innerText = format_money(saldo_favor)
         document.getElementById("res_impuesto").innerText = format_money(impuesto)
         document.getElementById("res_saldo_final_liquido").innerText = format_money(saldo_final)
+        
         document.getElementById("res_roi").innerText = "{:.1f}%".format(roi)
         document.getElementById("res_rentabilidad").innerText = "{:.1f}%".format(rentabilidad)
 
+        # --- Generar Desglose Visual ---
         html_gastos = ""
         html_gastos += crear_titulo_desglose("1. Inversión Inicial")
-        html_gastos += crear_fila_desglose("Postura Mínima", postura_min)
-        html_gastos += crear_fila_desglose("Oferta Máxima", oferta_max)
+        html_gastos += crear_fila_desglose("Precio Adjudicación", precio_adjudicacion)
         html_gastos += crear_fila_desglose("Garantía", garantia)
+        
         html_gastos += crear_titulo_desglose("2. Gastos Operacionales")
         if MODO_ACTUAL == "MACAL":
-            html_gastos += crear_fila_desglose(label_busqueda, MACAL_COSTO_BUSQUEDA)
             html_gastos += crear_fila_desglose(label_comision_compra, MACAL_COSTO_COMISION)
             html_gastos += crear_fila_desglose(f"Serv. Postventa ({UF_COBRO_LABEL})", MACAL_COSTO_ESCRITURA)
             html_gastos += crear_fila_desglose("Notaría (Macal)", MACAL_COSTO_NOTARIA)
@@ -793,13 +828,16 @@
             html_gastos += crear_fila_desglose("CBR", costo_cbr_normal)
             html_gastos += crear_fila_desglose("Judiciales", costo_judiciales)
         html_gastos += crear_fila_desglose("Alzamientos", c_alzamientos)
+        
         html_gastos += crear_titulo_desglose("3. Habilitación y Venta")
         html_gastos += crear_fila_desglose("Mejoras", costo_mejoras)
         html_gastos += crear_fila_desglose("IVA Débito", iva_venta)
         html_gastos += crear_fila_desglose("Comisión Venta", comision_venta)
         html_gastos += crear_fila_desglose("Legal Venta", c_legal_venta)
+        
         html_gastos += crear_titulo_desglose("4. Costo Financiero")
-        html_gastos += crear_fila_desglose(f"Interés ({meses_interes} meses)", interes_total)
+        html_gastos += crear_fila_desglose(f"Interés ({meses_interes} meses sobre base {format_money(base_calculo_interes)})", interes_total)
+        
         document.getElementById("breakdown_gastos").innerHTML = html_gastos
 
         html_ingresos = ""
@@ -807,6 +845,7 @@
         html_ingresos += crear_fila_desglose("Venta Vivienda", venta_vivienda)
         html_ingresos += crear_fila_desglose("Reembolso Garantía", garantia)
         document.getElementById("breakdown_ingresos").innerHTML = html_ingresos
+        
         cambiar_slide("slide_final")
 
     # --- PDF GENERATOR ---
@@ -1017,7 +1056,7 @@
             2. 📉 STRESS TEST: ¿Aguanta venta -10%?
             3. 💡 VEREDICTO: APRUEBAS o RECHAZAS y por qué.
             4. 🚀 2 ACCIONES INMEDIATAS.
-            CONCLUSIÓN BREVE."
+            CONCLUSIÓN BREVE. Firma: "Programa desarrollado por Hizoka."
         `;
 
         document.getElementById('loading_ai').style.display = 'block';
@@ -1127,7 +1166,7 @@
         const subt = document.getElementById("main_subtitle");
 
         if (id_mostrar === "slide_selection") {
-             subt.innerText = "Selecciona el tipo de evaluación";
+             subt.innerText = "Selecciona el tipo de evaluación"; 
         } else if (id_mostrar === "slide_final") {
              subt.innerText = "Resumen de Resultados";
         } else {
@@ -1156,7 +1195,7 @@
             console.log("✅ UF Actualizada desde internet: $" + valorReal);
         } catch (error) {
             console.error("⚠️ Error obteniendo UF:", error);
-            inputUF.value = "38000"; 
+            inputUF.value = "39800"; 
         }
     }
     window.addEventListener('load', cargarUFDelDia);
@@ -1164,4 +1203,3 @@
 
 </body>
 </html>
-
