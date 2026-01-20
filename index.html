@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
     <title>Gestor de Remates</title>
     <link rel="icon" type="image/png" href="hzz.png">
+    
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
     <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
-    <style>
-        /* --- VARIABLES DE MARCA DOSH --- */
+
+    <style id="common-styles">
+        /* Variables */
         :root {
             --dosh-blue: #003B73;       
             --dosh-green: #9CBF28;      
@@ -20,108 +20,78 @@
             --text-main: #333333;
             --text-light: #777777;
         }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; -webkit-tap-highlight-color: transparent; }
+        .slide { display: none; animation: fadeIn 0.3s ease-out; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Spinner Carga */
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--dosh-blue); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Utilidades */
+        .green-text { color: var(--dosh-green-dark); font-weight: bold !important; }
+        .red-text { color: #d63384; }
+        .brand-text { color: var(--dosh-blue); font-weight: bold; }
+        .small-note { font-size: 0.75rem; color: #999; display: block; margin-bottom: 4px; }
+        .img-thumbnail { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .gallery-preview { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; }
+        .watermark-dev { text-align: center; padding: 20px 0; margin-top: 30px; opacity: 0.8; width: 100%; }
+        .watermark-dev img { max-height: 90px; width: auto; transition: opacity 0.3s; }
+        .watermark-dev img:hover { opacity: 1; }
+    </style>
 
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--dosh-bg); padding: 15px; color: var(--text-main); margin: 0; -webkit-tap-highlight-color: transparent; padding-bottom: 50px; }
+    <style id="desktop-styles" media="screen and (min-width: 769px)">
+        body { background-color: var(--dosh-bg); padding: 15px; color: var(--text-main); padding-bottom: 50px; }
+        .app-header { display: none; } /* Ocultar header móvil */
         .container { max-width: 800px; margin: 0 auto; background: rgb(240, 239, 239); padding: 25px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0, 59, 115, 0.08); border-top: 5px solid var(--dosh-green); }
         h1 { color: var(--dosh-blue); font-size: 1.6rem; margin-top: 0; text-align: center; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase; }
         .subtitle { text-align: center; color: var(--text-light); font-size: 0.9rem; margin-bottom: 25px; font-weight: 500; }
         
-        .slide { display: none; animation: slideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-        .slide.active { display: block; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        
         h2 { font-size: 1.1rem; color: var(--dosh-blue); border-bottom: 2px solid var(--dosh-green); padding-bottom: 8px; margin-top: 5px; margin-bottom: 20px; display: inline-block; width: 100%; }
         .row { display: flex; gap: 15px; margin-bottom: 15px; }
         .col { flex: 1; }
-
-        /* PANTALLA DE CARGA */
-        #loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.5s;
-        }
-        .spinner {
-            border: 5px solid #f3f3f3; border-top: 5px solid var(--dosh-blue);
-            border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        @media (max-width: 600px) { 
-            .row { flex-direction: column; gap: 15px; } 
-            .container { padding: 20px; min-height: 90vh; } 
-            h2 { font-size: 1.2rem; } 
-            .slide { padding-bottom: 20px; } 
-            .radio-group { flex-direction: column !important; align-items: flex-start !important; }
-            .radio-group label { margin-bottom: 10px; width: 100%; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #e1e5eb; }
-        }
-
-        /* --- GALERÍA FOTOS --- */
-        .gallery-preview { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; }
-        .img-thumbnail { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-
-        /* --- ESTILOS GENERALES --- */
         label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--dosh-blue); }
-        .small-note { font-size: 0.75rem; color: #999; display: block; margin-bottom: 4px; }
         input, select, textarea { width: 100%; padding: 14px; border: 2px solid #e1e5eb; border-radius: 10px; box-sizing: border-box; font-size: 16px; background-color: #fafafa; color: #333; transition: all 0.2s; }
         input:focus, select:focus, textarea:focus { border-color: var(--dosh-blue); outline: none; background-color: #fff; box-shadow: 0 0 0 4px rgba(0, 59, 115, 0.1); }
         .input-editable { background-color: #fff; border: 1px solid #ccc; padding: 8px; font-size: 0.95rem; text-align: right; width: 140px; }
-        .input-editable:focus { border-color: var(--dosh-green); background-color: #fefffa; }
-        input:disabled { background-color: #f0f2f5; color: #888; border-color: #eee; }
         
         .file-upload-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; margin-bottom: 15px; }
         .btn-file { border: 2px dashed var(--dosh-blue); color: var(--dosh-blue); background-color: #f8f9fa; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; text-align: center; display: block; box-sizing: border-box; }
         .file-upload-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; width: 100%; }
-        #preview-container { text-align: center; margin-bottom: 15px; display: none; }
         
         .nav-buttons { display: flex; gap: 12px; margin-top: 30px; }
         button { padding: 15px; border: none; border-radius: 10px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: transform 0.1s, opacity 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        button:active { transform: scale(0.97); }
         .btn-next { background-color: var(--dosh-blue); color: white; flex: 1; }
         .btn-back { background-color: #e2e6ea; color: var(--text-main); flex: 0.4; }
-        .btn-pdf { background-color: var(--dosh-green); color: white; width: 100%; margin-top: 15px; font-size: 1.1rem; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .btn-pdf { background-color: var(--dosh-green); color: white; width: 100%; margin-top: 15px; font-size: 1.1rem; }
         .btn-new { background-color: #5d7a96; color: white; width: 100%; margin-top: 15px; }
         
         .result-box { background: #fff; border: 1px solid #e1e5eb; border-radius: 12px; padding: 15px; margin-top: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
         .result-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f2f5; align-items: center; }
         .result-row span:first-child { color: #555; font-size: 0.9rem; flex:1; }
-        .result-row span:last-child { font-weight: 600; font-family: 'Segoe UI', monospace; font-size: 1rem; color: #333; }
-        .green-text { color: var(--dosh-green-dark); font-weight: bold !important; }
-        .red-text { color: #d63384; }
-        .brand-text { color: var(--dosh-blue); font-weight: bold; }
         .result-row.total-final { background-color: #f4f9e6; border: 1px solid var(--dosh-green); border-radius: 8px; padding: 15px; margin-top: 15px; color: var(--dosh-blue); }
         .result-row.total-final span:last-child { color: var(--dosh-blue); font-size: 1.5rem; font-weight: 800; }
         
         details { margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
         summary { padding: 12px; background-color: #f8f9fa; color: var(--dosh-blue); font-weight: 600; font-size: 0.85rem; text-align: right; list-style: none; outline: none; cursor: pointer; }
-        summary:after { content: " ▼ Ver Detalle"; font-size: 0.8rem; opacity: 0.8; }
-        details[open] summary:after { content: " ▲ Ocultar"; }
         .breakdown-list { background: #fff; padding: 15px; }
         .breakdown-item { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 8px; color: #666; }
         .breakdown-title { background-color: var(--dosh-blue); color: white; padding: 5px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-align: center; margin: 15px 0 10px 0; text-transform: uppercase; letter-spacing: 1px; }
-        .breakdown-title:first-child { margin-top: 0; }
-        #mensaje { text-align: center; margin-top: 15px; font-weight: bold; color: var(--dosh-green-dark); min-height: 24px; }
         .interest-highlight { background-color: #eef2f7; border-left: 4px solid var(--dosh-blue); padding: 10px; margin-bottom: 10px; border-radius: 4px; }
-        .interest-highlight .result-row { border-bottom: 1px dashed #ccc; padding: 5px 0; }
-        .interest-highlight .result-row:last-child { border-bottom: none; }
-
-        /* SELECCIÓN CARDS */
+        
+        /* Cards Selección */
         .mode-selection-container { display: flex; flex-direction: column; gap: 20px; margin-top: 30px; }
-        .mode-card { background: white; border: 2px solid #e1e5eb; border-radius: 15px; padding: 25px; text-align: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
+        .mode-card { background: white; border: 2px solid #e1e5eb; border-radius: 15px; padding: 25px; text-align: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; overflow: hidden; display: block; }
         .mode-card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0, 59, 115, 0.15); border-color: var(--dosh-blue); }
-        .mode-card h3 { color: var(--dosh-blue); margin: 15px 0 10px 0; font-size: 1.3rem; }
-        .mode-card p { color: #666; font-size: 0.9rem; margin: 0; line-height: 1.4; }
         .icon-mode { font-size: 3.5rem; display: block; margin-bottom: 10px; }
         .badge-new { position: absolute; top: 15px; right: 15px; background: var(--dosh-green); color: white; font-size: 0.7rem; font-weight: bold; padding: 4px 8px; border-radius: 10px; text-transform: uppercase; }
         .macal-option-box { background-color: #e3f2fd; border: 1px solid #90caf9; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
         .radio-group { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
 
-        /* FOOTER */
-        .watermark-dev { text-align: center; padding: 20px 0; margin-top: 30px; opacity: 0.8; width: 100%; }
-        .watermark-dev img { max-height: 90px; width: auto; transition: opacity 0.3s; }
-        .watermark-dev img:hover { opacity: 1; }
-
-        /* --- ESTILOS SIDEBAR IA --- */
+        /* Sidebar IA Desktop */
         .ia-sidebar {
             position: fixed; top: 20px; right: -400px; width: 350px; height: 90vh;
             background-color: #f0f7ff; border-left: 5px solid #4285f4;
@@ -136,12 +106,75 @@
         .ia-content { padding: 20px; overflow-y: auto; flex-grow: 1; font-size: 0.9rem; line-height: 1.5; color: #333; }
         .ia-actions { padding: 15px; background: white; border-top: 1px solid #ddd; text-align: center; }
         .btn-action-add { background-color: var(--dosh-green); color: white; padding: 10px; width: 100%; border-radius: 8px; font-weight: bold; transition: background 0.3s; }
-        .btn-action-add.added { background-color: #ccc; cursor: default; }
+    </style>
 
-        @media (max-width: 900px) {
-            .ia-sidebar { width: 100%; height: 50vh; top: auto; bottom: -60vh; right: 0; border-radius: 20px 20px 0 0; border-left: none; border-top: 5px solid #4285f4; transition: bottom 0.5s ease; }
-            .ia-sidebar.open { bottom: 0; right: 0; }
+    <style id="mobile-styles" media="screen and (max-width: 768px)">
+        body { background-color: #f4f5f7; margin: 0; padding: 0; padding-bottom: 80px; }
+        .container { width: 100%; max-width: 100%; padding: 20px; box-sizing: border-box; background: transparent; box-shadow: none; border: none; }
+        
+        /* Header App Móvil */
+        .app-header { background-color: var(--dosh-blue); color: white; padding: 15px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
+        .app-header h1 { margin: 0; font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: white; }
+        h1 { display: none; } /* Ocultar h1 normal en móvil */
+        .app-header h1 { display: block; } /* Mostrar h1 del header */
+
+        .subtitle { text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 20px; margin-top: 10px; }
+        
+        h2 { font-size: 1.2rem; color: var(--dosh-blue); border-left: 5px solid var(--dosh-green); border-bottom: none; padding-left: 10px; margin-top: 10px; margin-bottom: 20px; font-weight: 800; display: block; width: auto;}
+        
+        .row { display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; }
+        .col { flex: 1; }
+        
+        /* Inputs IOS Style */
+        label { font-weight: 600; display: block; margin-bottom: 8px; font-size: 0.9rem; color: #444; }
+        input, select, textarea { width: 100%; padding: 16px; border: 1px solid #ddd; border-radius: 16px; box-sizing: border-box; font-size: 16px; background-color: white; color: #333; -webkit-appearance: none; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        input:focus, select:focus, textarea:focus { border-color: var(--dosh-blue); outline: none; }
+        
+        /* Botones Móvil */
+        .nav-buttons { display: flex; gap: 10px; margin-top: 30px; padding-bottom: 20px; }
+        button { padding: 18px; border: none; border-radius: 16px; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .btn-next { background-color: var(--dosh-blue); color: white; flex: 2; }
+        .btn-back { background-color: #eef2f5; color: #555; flex: 1; border: 1px solid #ddd; }
+        .btn-pdf { background-color: var(--dosh-green); color: white; width: 100%; margin-top: 15px; font-size: 1.1rem; }
+        .btn-new { background-color: #5d7a96; color: white; width: 100%; margin-top: 15px; }
+
+        .file-upload-wrapper { margin-bottom: 20px; position: relative; }
+        .btn-file { border: 2px dashed #cbd5e0; color: var(--dosh-blue); background-color: white; padding: 25px; border-radius: 16px; font-weight: 600; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .file-upload-wrapper input[type=file] { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; }
+        
+        .result-box { background: white; border: none; border-radius: 16px; padding: 20px; margin-top: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .result-row { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #f0f0f0; align-items: center; }
+        .input-editable { background-color: #f9f9f9; border: 1px solid #eee; padding: 10px; font-size: 1rem; text-align: right; width: 140px; border-radius: 8px; font-weight: bold; color: var(--dosh-blue); }
+
+        /* Cards Móvil */
+        .mode-selection-container { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
+        .mode-card { background: white; border: none; border-radius: 16px; padding: 20px; text-align: left; display: flex; align-items: center; gap: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
+        .icon-mode { font-size: 2.5rem; display: block; margin-bottom: 0; }
+        .mode-card div { flex: 1; }
+        .mode-card h3 { margin: 0 0 5px 0; font-size: 1.2rem; color: var(--dosh-blue); }
+        .mode-card p { margin: 0; font-size: 0.85rem; color: #777; }
+        .badge-new { position: absolute; top: 10px; right: 10px; background: var(--dosh-green); color: white; font-size: 0.65rem; font-weight: bold; padding: 3px 8px; border-radius: 10px; }
+        
+        /* Macal Radio Buttons Móvil (CORREGIDO) */
+        .macal-option-box { background-color: #e3f2fd; border: none; border-radius: 16px; padding: 15px; margin-bottom: 15px; }
+        .radio-group { display: flex; gap: 10px; margin-bottom: 15px; flex-direction: row; }
+        .radio-group label { flex: 1; display: flex; align-items: center; gap: 8px; background: white; padding: 12px; border-radius: 12px; border: 1px solid #ddd; margin-bottom: 0; font-size: 0.85rem; justify-content: center; text-align: center;}
+        
+        /* Sidebar IA Móvil (Bottom Sheet) */
+        .ia-sidebar {
+            position: fixed; left: 0; right: 0; bottom: -100vh;
+            width: 100%; height: 85vh;
+            background-color: white; border-radius: 20px 20px 0 0;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+            transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 2000; display: flex; flex-direction: column;
+            top: auto; border-left: none;
         }
+        .ia-sidebar.open { bottom: 0; right: 0; }
+        .ia-header { padding: 20px; background: white; border-bottom: 1px solid #eee; border-radius: 20px 20px 0 0; }
+        .ia-header h3 { color: var(--dosh-blue); }
+        .btn-close { color: #999; font-size: 2rem; background: #f0f0f0; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding-bottom: 4px; }
+        .ia-content { background: #fcfcfc; }
     </style>
     
     <script>
@@ -160,7 +193,9 @@
                     reader.readAsDataURL(file);
                 });
                 document.getElementById('preview-container').style.display = 'flex';
-                document.querySelector('.btn-file').innerText = "✅ " + input.files.length + " Fotos cargadas";
+                // Texto dinámico según dispositivo
+                var texto = window.innerWidth > 768 ? "✅ Fotos cargadas" : "✅ Fotos listas";
+                document.querySelector('.btn-file').innerText = texto;
             }
         }
     </script>
@@ -170,34 +205,39 @@
 <div id="loading-overlay">
     <div class="spinner"></div>
     <h3 style="color: var(--dosh-blue); margin-top: 20px;">Cargando Sistema...</h3>
-    <p style="color: #666; font-size: 0.9rem;">Configurando entorno Python</p>
+</div>
+
+<div class="app-header">
+    <h1>Gestor de Remates</h1>
 </div>
 
 <div class="container">
-    <h1>Gestor De Remates</h1>
-    <p class="subtitle" id="main_subtitle">Selecciona el tipo de evaluación</p>
+    <h1>Gestor De Remates</h1> <p class="subtitle" id="main_subtitle">Selecciona el tipo de evaluación</p>
 
     <div id="slide_selection" class="slide active">
         <div class="mode-selection-container">
             <div class="mode-card" py-click="iniciar_metodo_normal">
                 <span class="icon-mode">🏠</span>
-                <h3>Método Normal</h3>
-                <p>Cálculo tradicional con honorarios de búsqueda y costos operacionales estándar.</p>
+                <div>
+                    <h3>Método Normal</h3>
+                    <p>Cálculo tradicional con honorarios de búsqueda y costos operacionales estándar.</p>
+                </div>
             </div>
             <div class="mode-card" py-click="iniciar_metodo_macal">
                 <span class="badge-new">!</span>
                 <span class="icon-mode">⚖️</span>
-                <h3>Método Macal</h3>
-                <p>Calculadora especializada: Comisiones Macal, Tramos de Escrituración (UF) y fórmulas de Notaría/CBR.</p>
+                <div>
+                    <h3>Método Macal</h3>
+                    <p>Calculadora especializada: Comisiones Macal, Tramos de Escrituración (UF) y fórmulas de Notaría/CBR.</p>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="slide1" class="slide">
         <h2>1. Ficha Técnica</h2>
-        <label>Imagen de la Propiedad (Opcional)</label>
         <div class="file-upload-wrapper">
-            <div class="btn-file">📷 Toca para subir foto</div>
+            <div class="btn-file">📷 Subir fotos</div>
             <input type="file" id="input_imagen" accept="image/*" multiple onchange="procesarImagen(this)">
         </div>
         <div id="preview-container" class="gallery-preview" style="display:none;"></div>
@@ -228,8 +268,8 @@
         </div>
         <label>Fuente de Información</label>
         <input type="text" id="input_fuente" placeholder="Ej: Macal.cl">
-        <label style="margin-top: 10px;">🔗 Link Publicación (URL)</label>
-        <input type="url" id="input_link" placeholder="https://www.macal.cl/propiedad/..." style="color: var(--dosh-blue);">
+        <label style="margin-top: 10px;">Link Publicación (URL)</label>
+        <input type="url" id="input_link" placeholder="Pegar enlace..." style="color: var(--dosh-blue);">
         <div class="row" style="margin-top: 15px;">
             <div class="col">
                 <label>Dirección</label>
@@ -241,10 +281,10 @@
             </div>
         </div>
         <label>Notas / Estado</label>
-        <textarea id="input_detalles" rows="3"></textarea>
+        <textarea id="input_detalles" rows="3" placeholder="Observaciones..."></textarea>
         <div class="nav-buttons">
-            <button class="btn-back" py-click="ir_menu_principal">← Menú</button>
-            <button class="btn-next" py-click="ir_slide_2">Siguiente ➝</button>
+            <button class="btn-back" py-click="ir_menu_principal">Volver</button>
+            <button class="btn-next" py-click="ir_slide_2">Siguiente</button>
         </div>
     </div>
 
@@ -254,7 +294,7 @@
         <div class="result-box" style="background: #eef2f7; border-color: #b0c4de; margin-bottom: 15px; padding: 10px;">
             <div class="row" style="margin-bottom: 0; align-items: center;">
                 <div class="col" style="flex: 0.7;">
-                    <label style="margin-bottom: 0;">📈 Valor UF Hoy ($)</label>
+                    <label style="margin-bottom: 0; color: var(--dosh-blue);">Valor UF Hoy ($)</label>
                 </div>
                 <div class="col">
                     <input type="number" inputmode="numeric" id="input_valor_uf_dia" value="38000" 
@@ -271,7 +311,7 @@
                     <input type="number" id="input_postura_min_uf" placeholder="UF" 
                            style="flex: 0.8; font-size: 0.9rem; padding: 10px;"
                            py-input="convertir_uf_a_clp">
-                    <input type="number" inputmode="numeric" id="input_postura_min" placeholder="$ CLP" value="0"
+                    <input type="number" inputmode="numeric" id="input_postura_min" placeholder="$ CLP"
                            style="flex: 1.2; font-weight: bold;"
                            py-input="convertir_clp_a_uf">
                 </div>
@@ -279,22 +319,23 @@
             </div>
             <div class="col">
                 <label>Oferta Máxima ($)</label>
-                <input type="number" inputmode="numeric" id="input_oferta_max" value="0"
+                <input type="number" inputmode="numeric" id="input_oferta_max" placeholder="0"
                        oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </div>
         </div>
         <div class="row">
             <div class="col">
                 <label>Garantía (Vale Vista)</label>
-                <input type="number" inputmode="numeric" id="input_garantia" value="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                <input type="number" inputmode="numeric" id="input_garantia" placeholder="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </div>
             <div class="col">
                 <label>Meses (Interés)</label>
-                <input type="number" inputmode="numeric" id="cant_mes" value="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                <input type="number" inputmode="numeric" id="cant_mes" placeholder="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </div>
         </div>
+        
         <div id="container_costos_normales">
-            <h2 style="font-size: 1rem; border:none; margin-bottom: 5px; color: var(--text-light);">Costos Fijos (Editables)</h2>
+            <h2 style="font-size: 1rem; border:none; margin-bottom: 5px; color: #777;">Costos Fijos (Editables)</h2>
             <div class="result-box">
                 <div class="result-row">
                     <span>⚖️ Abogado</span>
@@ -322,12 +363,14 @@
                 </div>
             </div>
         </div>
+
         <div id="container_msg_macal" style="display:none; text-align: center; color: #666; font-size: 0.9rem; margin-top: 15px; background: #e8f4f8; padding: 10px; border-radius: 8px;">
-            <p>ℹ️ En <strong>Modo Macal</strong>, los costos de Escrituración, Notaría y CBR se calculan automáticamente según las fórmulas oficiales en el siguiente paso.</p>
+            <p>ℹ️ <strong>Modo Macal</strong>: Costos de Escritura, Notaría y CBR automáticos.</p>
         </div>
+        
         <div class="nav-buttons">
-            <button class="btn-back" py-click="ir_slide_1">← Atrás</button>
-            <button class="btn-next" py-click="ir_slide_3">Siguiente ➝</button>
+            <button class="btn-back" py-click="ir_slide_1">Atrás</button>
+            <button class="btn-next" py-click="ir_slide_3">Siguiente</button>
         </div>
     </div>
 
@@ -336,38 +379,41 @@
             <h3 style="margin-top:0; color:var(--dosh-blue); font-size:1rem;">⚙️ Configuración Macal</h3>
             <label>Tipo de Comisión</label>
             <div class="radio-group">
-                <label style="font-weight:normal; display:flex; align-items:center; gap:5px;">
+                <label>
                     <input type="radio" name="macal_tipo" id="radio_normal" value="normal" checked> 
-                    Normal (3% + IVA)
+                    Normal (3%)
                 </label>
-                <label style="font-weight:normal; display:flex; align-items:center; gap:5px;">
+                <label>
                     <input type="radio" name="macal_tipo" id="radio_liq" value="liq"> 
-                    Liq. Concursal (2% + IVA)
+                    Liq. (2%)
                 </label>
             </div>
             <div class="result-row">
-                <span>📝 Notaría (Base $70k + 0.1%)</span>
-                <span class="small-note" style="text-align: right;">Automático</span>
+                <span>Notaría (Auto)</span>
+                <span class="small-note" style="text-align: right;">Base 70k + 0.1%</span>
             </div>
             <div class="result-row">
-                <span>🏛️ CBR (0.4%, Mín $250k)</span>
+                <span>CBR (Editable)</span>
                 <input type="number" inputmode="numeric" id="macal_cbr_editable" value="250000" class="input-editable">
             </div>
             <div class="result-row" style="margin-top:5px;">
-                <span>📄 Escrituración (Acorde a precio de adjudicacion)</span>
+                <span>Escrituración</span>
                 <span id="disp_escritura_uf" class="brand-text" style="font-size:0.9rem;">-- UF + IVA</span>
             </div>
         </div>
+
         <h2>3. Proyección Venta</h2>
         <label>Precio Venta Estimado ($)</label>
         <span class="small-note">Valor mercado estimado</span>
-        <input type="number" inputmode="numeric" id="input_venta_vivienda" value="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+        <input type="number" inputmode="numeric" id="input_venta_vivienda" placeholder="0" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+        
         <div class="row" style="margin-top: 15px;">
              <div class="col">
                 <label>🛠️ Mejoras / Reformas</label>
                 <input type="number" inputmode="numeric" id="input_mejoras" value="3000000" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </div>
         </div>
+        
         <div class="result-box">
              <div class="result-row">
                 <span>🤝 Comisión Venta (2%)</span>
@@ -378,13 +424,14 @@
                 <span id="disp_iva" class="brand-text">--</span>
             </div>
             <div class="result-row" id="row_legal_venta">
-                 <span>📄 Legal Venta (Propia)</span>
+                 <span>📄 Legal Venta</span>
                  <input type="number" inputmode="numeric" id="costo_legal_venta" value="100000" class="input-editable">
             </div>
         </div>
+        
         <div class="nav-buttons">
-            <button class="btn-back" py-click="ir_slide_2">← Atrás</button>
-            <button class="btn-next" py-click="calcular_y_mostrar_final">Ver Resultados ➝</button>
+            <button class="btn-back" py-click="ir_slide_2">Atrás</button>
+            <button class="btn-next" py-click="calcular_y_mostrar_final" style="background-color: var(--dosh-green);">Calcular Resultados 🏁</button>
         </div>
     </div>
 
@@ -439,18 +486,18 @@
             <div class="row" style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;">
                 <div class="col" style="text-align: center;">
                     <span style="font-size: 0.8rem; color: #666;">ROI</span><br>
-                    <span id="res_roi" style="font-weight: bold; color: var(--dosh-green-dark);">0%</span>
+                    <span id="res_roi" style="font-weight: bold; color: var(--dosh-green-dark); font-size: 1.2rem;">0%</span>
                 </div>
                 <div class="col" style="text-align: center;">
                     <span style="font-size: 0.8rem; color: #666;">Rentabilidad</span><br>
-                    <span id="res_rentabilidad" style="font-weight: bold; color: var(--dosh-blue);">0%</span>
+                    <span id="res_rentabilidad" style="font-weight: bold; color: var(--dosh-blue); font-size: 1.2rem;">0%</span>
                 </div>
             </div>
         </div>
 
         <div id="sec_ia" style="margin-top: 20px; margin-bottom: 20px;">
             <button onclick="consultarGroq()" 
-                    style="background: linear-gradient(45deg, #4285f4, #9b72cb); color: white; width: 100%; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); position: relative; z-index: 10;">
+                    style="background: linear-gradient(45deg, #4285f4, #9b72cb); color: white; width: 100%; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); position: relative; z-index: 10; padding: 20px; font-size: 1.1rem; border-radius: 16px;">
                  🤖 Analizar Oportunidad con IA
             </button>
             <div id="loading_ai" style="display:none; text-align: center; margin-top: 10px;">
@@ -464,16 +511,16 @@
                 <input type="email" id="input_email_cliente" placeholder="cliente@email.com" style="flex: 1; padding: 10px;">
                 <button py-click="solo_enviar_correo" style="flex: 0.3; background: var(--dosh-blue); color: white; border-radius: 8px; font-size: 1.2rem; padding: 0;">📤</button>
             </div>
-            <p class="small-note">Toca el botón 📤 para enviar sin descargar.</p>
         </div>
 
-        <button class="btn-pdf" py-click="generar_pdf_completo">📥 Descargar PDF (Guardar)</button>
-        <button class="btn-new" py-click="nueva_operacion">🔄 Nueva Operación / Menú</button>
+        <button class="btn-pdf" py-click="generar_pdf_completo">📥 Guardar PDF</button>
+        <button class="btn-new" py-click="nueva_operacion">🔄 Nueva Operación</button>
         <div id="mensaje"></div>
 
         <div class="nav-buttons">
             <button class="btn-back" py-click="ir_slide_3">← Editar</button>
         </div>
+        <br><br>
     </div>
 </div>
 
@@ -484,7 +531,6 @@
     </div>
     <div id="ia_content" class="ia-content"></div>
     <div class="ia-actions" id="ia_actions" style="display: none;">
-        <p style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">¿Te sirvió este análisis?</p>
         <button onclick="agregarAlPDF()" id="btn_add_pdf" class="btn-action-add">
             ➕ Agregar al PDF
         </button>
@@ -500,7 +546,6 @@
     from js import jspdf
     import datetime
 
-    # --- DATOS REGIONALES ---
     CHILE_DATA = {
         "Arica y Parinacota": ["Arica", "Camarones", "Putre", "General Lagos"],
         "Tarapacá": ["Iquique", "Alto Hospicio", "Pozo Almonte", "Camiña", "Colchane", "Huara", "Pica"],
@@ -520,7 +565,6 @@
         "Magallanes": ["Punta Arenas", "Laguna Blanca", "Río Verde", "San Gregorio", "Cabo de Hornos", "Antártica", "Porvenir", "Primavera", "Timaukel", "Natales", "Torres del Paine"]
     }
     
-    # --- CONSTANTES ---
     VALOR_UF = 38000
     DEF_ABOGADO = 1600000
     DEF_NOTARIA = 300000
@@ -529,7 +573,6 @@
     DEF_JUDICIALES = 300000
     DEF_LEGAL_VENTA = 100000
     
-    # Variables Globales
     MODO_ACTUAL = "NORMAL"
     MACAL_COSTO_ESCRITURA = 0
     MACAL_COSTO_COMISION = 0
@@ -560,7 +603,6 @@
             opt.value = c
             sel_com.add(opt)
 
-    # --- NAVEGACIÓN ---
     def cambiar_slide(id_mostrar):
         ids = ["slide_selection", "slide1", "slide2", "slide3", "slide_final"]
         subt = document.getElementById("main_subtitle")
@@ -582,11 +624,17 @@
                 el.classList.remove("active")
         window.scrollTo(0, 0)
 
-    # --- MODO Y INPUTS ---
     def ir_menu_principal(e): cambiar_slide("slide_selection")
     def ir_slide_1(e): cambiar_slide("slide1")
     def ir_slide_2(e): cambiar_slide("slide2")
-    def ir_slide_3(e): cambiar_slide("slide3")
+
+    def ir_slide_3(e):
+        meses = get_val("cant_mes")
+        if meses <= 0:
+            window.alert("⚠️ Debes ingresar un número de meses válido (mayor a 0).")
+            document.getElementById("cant_mes").focus()
+            return
+        cambiar_slide("slide3")
     
     def iniciar_metodo_normal(e):
         global MODO_ACTUAL
@@ -607,8 +655,9 @@
     def nueva_operacion(e):
         ids_text = ["input_nombre", "input_direccion", "input_superficie", "input_detalles", "input_fuente", "input_link"]
         for i in ids_text: document.getElementById(i).value = ""
+        
         ids_num = ["input_postura_min", "input_oferta_max", "input_garantia", "input_venta_vivienda", "input_mejoras", "cant_mes"]
-        for i in ids_num: document.getElementById(i).value = "0"
+        for i in ids_num: document.getElementById(i).value = ""
         
         document.getElementById("costo_abogado").value = str(DEF_ABOGADO)
         document.getElementById("costo_notaria").value = str(DEF_NOTARIA)
@@ -642,11 +691,13 @@
         document.getElementById("input_imagen").value = ""
         document.getElementById("preview-container").innerHTML = "" 
         document.getElementById("preview-container").style.display = "none"
-        document.querySelector(".btn-file").innerText = "📷 Toca para subir foto"
+        if window.innerWidth > 768:
+            document.querySelector(".btn-file").innerText = "📷 Toca para subir foto"
+        else:
+            document.querySelector(".btn-file").innerText = "📷 Subir fotos"
 
         cambiar_slide("slide_selection")
 
-    # --- UF LOGIC ---
     def get_val(id_elem):
         v = document.getElementById(id_elem).value
         if not v: return 0.0
@@ -677,7 +728,6 @@
     def recalcular_todo_uf(e):
         convertir_uf_a_clp(None)
 
-    # --- CALCULOS ---
     def crear_fila_desglose(label, valor):
         return f'<div class="breakdown-item"><span>{label}</span><span>{format_money(valor)}</span></div>'
     
@@ -697,7 +747,6 @@
     def calcular_y_mostrar_final(e):
         global MACAL_COSTO_ESCRITURA, MACAL_COSTO_COMISION, MACAL_COSTO_NOTARIA, MACAL_COSTO_CBR, MACAL_COSTO_BUSQUEDA, UF_COBRO_LABEL
         
-        # 1. Obtener valores
         postura_min = get_val("input_postura_min")
         oferta_max = get_val("input_oferta_max") 
         garantia = get_val("input_garantia")
@@ -707,13 +756,10 @@
         c_alzamientos = get_val("costo_alzamientos") 
         c_legal_venta = get_val("costo_legal_venta")
 
-        # Definimos la base: Suma de ofertas (para Busqueda e Interes) vs Precio Real (para Macal)
         suma_ofertas = postura_min + oferta_max
         precio_adjudicacion = oferta_max if oferta_max > 0 else postura_min
 
-        # 2. Calcular Costos según Modo
         if MODO_ACTUAL == "MACAL":
-            # --- Lógica Macal ---
             if document.getElementById("radio_liq").checked:
                 tasa_comision = 0.02
                 label_comision_compra = "Comisión Liq. (2% + IVA)"
@@ -722,81 +768,59 @@
                 label_comision_compra = "Comisión Normal (3% + IVA)"
             
             MACAL_COSTO_COMISION = (precio_adjudicacion * tasa_comision) * 1.19
-            
             uf_cobro, costo_escritura = calcular_escritura_macal(precio_adjudicacion)
             MACAL_COSTO_ESCRITURA = costo_escritura
             UF_COBRO_LABEL = f"{uf_cobro} UF"
             document.getElementById("disp_escritura_uf").innerText = f"{uf_cobro} UF + IVA"
-            
-            # Notaría Macal: 70k + 0.1% del precio adjudicación
             MACAL_COSTO_NOTARIA = 70000 + (precio_adjudicacion * 0.001)
             
-            # CBR Macal: 0.4% del precio adjudicación (Mínimo 250k)
             cbr_usuario = get_val("macal_cbr_editable")
             calc_cbr_min = precio_adjudicacion * 0.004
-            if cbr_usuario == 250000: # Si no lo ha editado manualmente
+            if cbr_usuario == 250000: 
                 MACAL_COSTO_CBR = 250000 if calc_cbr_min < 250000 else calc_cbr_min
                 document.getElementById("macal_cbr_editable").value = str(int(MACAL_COSTO_CBR))
             else:
                 MACAL_COSTO_CBR = cbr_usuario
                 
-            MACAL_COSTO_BUSQUEDA = 0 # En Macal no hay honorario búsqueda externo usualmente, o es 0
+            MACAL_COSTO_BUSQUEDA = 0 
             label_busqueda = "Búsqueda"
-            
-            # Reset variables normales
             costo_abogado = 0; costo_judiciales = 0; costo_notaria_normal = 0; costo_cbr_normal = 0; costo_busqueda_normal = 0
             
         else:
-            # --- Lógica Normal ---
             costo_abogado = get_val("costo_abogado")
             costo_notaria_normal = get_val("costo_notaria")
             costo_cbr_normal = get_val("costo_cbr")
             costo_judiciales = get_val("costo_judiciales")
-            
-            # Búsqueda: 2% de (Postura + Oferta)
             costo_busqueda_normal = suma_ofertas * 0.02
             label_busqueda = "Honorarios Búsqueda (2%)"
-            
-            # Reset variables Macal
             MACAL_COSTO_COMISION = 0; MACAL_COSTO_ESCRITURA = 0; MACAL_COSTO_NOTARIA = 0; MACAL_COSTO_CBR = 0; MACAL_COSTO_BUSQUEDA = 0
 
-        # 3. Costos de Venta
-        # OJO: Se calcula sobre el precio de VENTA, no de compra (estándar mercado)
         comision_venta = venta_vivienda * 0.02
         iva_venta = (venta_vivienda / 1.19) * 0.19
         
-        # 4. Total Gastos Operacionales
         if MODO_ACTUAL == "MACAL":
             gastos_operacionales = (MACAL_COSTO_NOTARIA + MACAL_COSTO_CBR + c_alzamientos + MACAL_COSTO_ESCRITURA + MACAL_COSTO_COMISION)
         else:
             gastos_operacionales = (costo_abogado + costo_notaria_normal + costo_cbr_normal + c_alzamientos + costo_judiciales + costo_busqueda_normal)
         
-        # 5. Cálculo de INTERESES (CORREGIDO)
-        # Tu indicación: 0.7% mensual sobre (Postura Mínima + Oferta Máxima)
         base_calculo_interes = suma_ofertas
         interes_mensual = base_calculo_interes * 0.007
         interes_total = interes_mensual * meses_interes
         
-        # 6. Totales Finales
-        # El subtotal de gastos incluye todo lo que sale del bolsillo
         subtotal_gasto = (precio_adjudicacion + gastos_operacionales + garantia + costo_mejoras + comision_venta + c_legal_venta + iva_venta + interes_total)
-        
-        total_ingresos = venta_vivienda + garantia # La garantía vuelve
+        total_ingresos = venta_vivienda + garantia
         saldo_favor = total_ingresos - subtotal_gasto
-        
         impuesto = saldo_favor * 0.27 if saldo_favor > 0 else 0
         saldo_final = saldo_favor - impuesto
         
         roi = (saldo_final / subtotal_gasto) * 100 if subtotal_gasto > 0 else 0
         rentabilidad = (saldo_final / venta_vivienda) * 100 if venta_vivienda > 0 else 0
 
-        # --- Actualización del DOM (HTML) ---
         if MODO_ACTUAL == "MACAL": document.getElementById("disp_busqueda").innerText = format_money(0)
         else: document.getElementById("disp_busqueda").innerText = format_money(costo_busqueda_normal)
         
         document.getElementById("disp_comision").innerText = format_money(comision_venta)
         document.getElementById("disp_iva").innerText = format_money(iva_venta)
-        
         document.getElementById("res_interes_mensual").innerText = format_money(interes_mensual)
         document.getElementById("res_interes_total").innerText = format_money(interes_total)
         
@@ -809,7 +833,6 @@
         document.getElementById("res_roi").innerText = "{:.1f}%".format(roi)
         document.getElementById("res_rentabilidad").innerText = "{:.1f}%".format(rentabilidad)
 
-        # --- Generar Desglose Visual ---
         html_gastos = ""
         html_gastos += crear_titulo_desglose("1. Inversión Inicial")
         html_gastos += crear_fila_desglose("Precio Adjudicación", precio_adjudicacion)
@@ -836,7 +859,7 @@
         html_gastos += crear_fila_desglose("Legal Venta", c_legal_venta)
         
         html_gastos += crear_titulo_desglose("4. Costo Financiero")
-        html_gastos += crear_fila_desglose(f"Interés ({meses_interes} meses sobre base {format_money(base_calculo_interes)})", interes_total)
+        html_gastos += crear_fila_desglose(f"Interés ({meses_interes} meses)", interes_total)
         
         document.getElementById("breakdown_gastos").innerHTML = html_gastos
 
@@ -848,7 +871,6 @@
         
         cambiar_slide("slide_final")
 
-    # --- PDF GENERATOR ---
     def crear_pdf_objeto():
         calcular_y_mostrar_final(None)
         nombre = document.getElementById("input_nombre").value
@@ -1027,7 +1049,6 @@
 </script>
 
 <script>
-    // Variable global para saber si incluimos la IA en el PDF
     window.incluirIAPdf = false;
 
     async function consultarGroq() {
@@ -1101,7 +1122,7 @@
         const btn = document.getElementById('btn_add_pdf');
         if (!window.incluirIAPdf) {
             window.incluirIAPdf = true;
-            btn.innerText = "✅ Agregado al Reporte";
+            btn.innerText = "✅ Agregado";
             btn.classList.add('added');
         } else {
             window.incluirIAPdf = false;
@@ -1124,7 +1145,7 @@
             return;
         }
 
-        mensajeDiv.innerText = "⏳ Enviando correo a " + emailUsuario + "...";
+        mensajeDiv.innerText = "⏳ Enviando correo...";
         
         try {
             const response = await fetch('/api/enviar-pdf', {
@@ -1145,7 +1166,7 @@
             }
         } catch (e) {
             console.error(e);
-            mensajeDiv.innerText = "⚠️ Error de conexión al enviar correo.";
+            mensajeDiv.innerText = "⚠️ Error de conexión.";
         }
     }
 
@@ -1180,22 +1201,20 @@
         });
         window.scrollTo(0, 0);
     }
-</script>
-
-<script>
+    
     async function cargarUFDelDia() {
         const inputUF = document.getElementById("input_valor_uf_dia");
-        inputUF.placeholder = "Cargando...";
+        inputUF.placeholder = "...";
         try {
             const respuesta = await fetch('https://mindicador.cl/api/uf');
             if (!respuesta.ok) throw new Error("No se pudo conectar con la API");
             const datos = await respuesta.json();
             const valorReal = datos.serie[0].valor;
             inputUF.value = Math.round(valorReal); 
-            console.log("✅ UF Actualizada desde internet: $" + valorReal);
+            console.log("✅ UF Actualizada: $" + valorReal);
         } catch (error) {
-            console.error("⚠️ Error obteniendo UF:", error);
-            inputUF.value = "39800"; 
+            console.error("⚠️ Error UF:", error);
+            inputUF.value = "38000"; 
         }
     }
     window.addEventListener('load', cargarUFDelDia);
