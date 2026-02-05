@@ -1030,11 +1030,15 @@
         
         if str_direccion != "No especificada":
             query_map = str_direccion.replace(" ", "+")
-            link_map = f"https://www.google.com/maps/search/?api=1&query={query_map}"
+            link_map = f"https://www.google.com/maps/search/?api=1&query={query_map}" # Standard URL
             
             # Texto azul para simular link
             doc.setTextColor(0, 0, 255)
-            doc.text("Ver ubicación en Google Maps", 20, 60, { "url": link_map })
+            doc.text("Ver ubicación en Google Maps", 20, 60)
+            
+            # Create clickable area on top of text (x, y, w, h)
+            # y=57 because text y=60 is the baseline. 
+            doc.link(20, 57, 60, 4, { "url": link_map }) 
             
             # Reset color
             doc.setTextColor(0, 0, 0)
